@@ -52,18 +52,17 @@ async function generatePlan(e) {
     document.getElementById('loader').classList.remove('hidden');
     document.getElementById('result').classList.add('hidden');
 
-    const prompt = `Направи елитен план за ${dest} за ${days} дни на БЪЛГАРСКИ. БЕЗ СИМВОЛИ # ИЛИ *.
-    1. ХОТЕЛИ: Дай точно 4 реда: "ХОТЕЛ: [Име]".
-    2. ПРОГРАМА: За всеки ден изброй всяко място на ОТДЕЛЕН ред. ЗАБРАНЕНО Е групирането.
-    Примерна структура за всеки ден:
-    ДЕН [Номер]
-    ☕ [Заведение за закуска] : [Описание]
-    🏛️ [Обект 1] : [Описание]
-    🏛️ [Обект 2] : [Описание]
-    🍴 [Ресторант за обяд] : [Описание]
-    📸 [Обект 3] : [Описание]
-    📸 [Обект 4] : [Описание]
-    🌙 [Ресторант за вечеря] : [Описание]`;
+    // СТРИКТЕН ПРОМПТ ЗА ГАРАНТИРАНИ ЗАКУСКИ
+    const prompt = `Направи елитен план за ${dest} за ${days} дни на БЪЛГАРСКИ. 
+    БЕЗ СИМВОЛИ # ИЛИ *. 
+    СТРУКТУРА ЗА ВСЕКИ ДЕН (БЕЗ ИЗКЛЮЧЕНИЯ):
+    ХОТЕЛ: [Тип] - [Име] (Дай 4 такива в началото на целия план)
+    ДЕН: [Номер]
+    ☕ ЗАКУСКА: [Име на заведение] | [Описание]
+    🏛️ ЗАБЕЛЕЖИТЕЛНОСТИ: [Обекти] | [Описание]
+    🍴 ОБЯД: [Име на ресторант] | [Описание]
+    📸 ЗАБЕЛЕЖИТЕЛНОСТИ: [Обекти] | [Описание]
+    🌙 ВЕЧЕРЯ: [Име на ресторант] | [Описание]`;
 
     try {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -71,7 +70,7 @@ async function generatePlan(e) {
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${O_KEY}` },
             body: JSON.stringify({
                 model: "gpt-4o",
-                messages: [{role: "system", content: "Ти си премиум гид. НИКОГА не групирай обекти на един ред. Всеки обект = нов ред с емоджи."}, {role: "user", content: prompt}]
+                messages: [{role: "system", content: "Ти си професионален гид. Всеки елемент от програмата ЗАДЪЛЖИТЕЛНО започва с емоджи и съдържа ':' за разделител. Пиши кратко."}, {role: "user", content: prompt}]
             })
         });
         const data = await response.json();
@@ -84,43 +83,42 @@ function renderUI(dest, md) {
     const res = document.getElementById('result');
     let hotelsHtml = "";
     let programHtml = "";
-    let hotelCount = 0;
     
     const lines = md.replace(/[*#]/g, '').split('\n').filter(l => l.trim() !== "");
 
     lines.forEach(line => {
-        const cleanLine = line.trim();
-        const upperLine = cleanLine.toUpperCase();
-        
-        if (upperLine.startsWith('ХОТЕЛ') && hotelCount < 4) {
-            const name = cleanLine.includes(':') ? cleanLine.split(':')[1].trim() : cleanLine;
+        // ХОТЕЛИ
+        if (line.toUpperCase().startsWith('ХОТЕЛ:')) {
+            const content = line.split(':')[1].trim();
+            const name = content.includes('-') ? content.split('-')[1].trim() : content;
             const hotelUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest + " " + name)}&aid=701816`;
             hotelsHtml += `
-            <div class="bg-white p-5 rounded-3xl flex justify-between items-center border border-slate-100 shadow-sm">
-                <p class="font-bold text-slate-800 text-xs">${name}</p>
-                <a href="${hotelUrl}" target="_blank" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase shadow-lg flex-shrink-0">Резервирай</a>
+            <div class="bg-white p-4 rounded-2xl flex justify-between items-center border border-slate-100 shadow-sm">
+                <div><p class="text-[8px] font-black text-blue-600 uppercase mb-0.5">Настаняване</p><p class="font-bold text-slate-800 text-[11px] leading-tight">${name}</p></div>
+                <a href="${hotelUrl}" target="_blank" rel="noopener noreferrer" class="bg-blue-600 text-white px-3 py-1.5 rounded-xl text-[9px] font-black uppercase shadow-md flex-shrink-0">Резервирай</a>
             </div>`;
-            hotelCount++;
         }
-        else if (upperLine.includes('ДЕН')) {
-            programHtml += `<div class="text-2xl font-black text-slate-900 border-b-4 border-blue-600/20 mt-10 mb-6 uppercase italic pb-1">${cleanLine}</div>`;
+        // ДНИ
+        else if (line.toUpperCase().includes('ДЕН:')) {
+            programHtml += `<div class="text-2xl font-black text-slate-900 border-b-4 border-blue-600/20 mt-10 mb-6 uppercase italic pb-1">${line.trim()}</div>`;
         }
-        else if (/[\u{1F300}-\u{1F9FF}]/u.test(cleanLine)) {
-            const parts = cleanLine.split(/[:|-]/);
+        // ПРОГРАМА (ЗАКУСКИ, ОБЯДИ, ВЕЧЕРИ, ОБЕКТИ)
+        else if (/[\u{1F300}-\u{1F9FF}]/u.test(line) && line.includes(':')) {
+            const parts = line.split(':');
             const title = parts[0].trim();
-            const desc = parts.slice(1).join(' ').trim();
+            const desc = parts[1] ? parts[1].trim() : "";
             const cleanTitle = title.replace(/[\u{1F300}-\u{1F9FF}]/u, '').trim();
             
-            // Директен WayAway линк с твоя маркер 701816
+            // ФИКСИРАН АФИЛИЕЙТ ЛИНК КЪМ WAYAWAY С ТВОЕТО ID 701816
             const tpUrl = `https://wayaway.tp.st/search?marker=701816&query=${encodeURIComponent(dest + " " + cleanTitle)}&subid=itinerflai`;
             
             programHtml += `
-            <div class="bg-white p-6 rounded-[2.5rem] shadow-md border border-slate-50 mb-4 flex justify-between items-center group transition">
+            <div class="bg-white p-5 rounded-[2.5rem] shadow-md border border-slate-50 mb-4 flex justify-between items-center group transition hover:border-blue-200">
                 <div class="flex flex-col pr-4">
                     <b class="text-slate-900 font-extrabold text-base block mb-0.5 tracking-tight">${title}</b>
                     <p class="text-slate-500 text-[11px] leading-relaxed line-clamp-2">${desc}</p>
                 </div>
-                <a href="${tpUrl}" target="_blank" class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center flex-shrink-0 shadow-lg group-hover:bg-blue-600 transition">
+                <a href="${tpUrl}" target="_blank" rel="noopener noreferrer" class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center flex-shrink-0 shadow-lg group-hover:bg-blue-600 transition">
                     <i class="fas fa-external-link-alt text-sm"></i>
                 </a>
             </div>`;
@@ -130,14 +128,14 @@ function renderUI(dest, md) {
     res.innerHTML = `
         <div id="pdfArea" class="max-w-5xl mx-auto pb-24 bg-slate-50/30 p-4 md:p-8 rounded-[4rem]">
             <div class="bg-slate-900 p-8 rounded-[2.5rem] text-white mb-10 flex justify-between items-center shadow-xl border-b-[8px] border-blue-600">
-                <div><h2 class="text-3xl font-black italic uppercase tracking-tighter">${dest}</h2><p class="text-[9px] opacity-50 tracking-[0.3em] font-light uppercase">Premium Guide</p></div>
+                <div><h2 class="text-3xl font-black italic uppercase tracking-tighter">${dest}</h2><p class="text-[9px] opacity-50 tracking-[0.3em] font-light">PREMIUM GUIDE BY ITINERFLAI</p></div>
                 <div class="flex gap-2">
-                    <button onclick="saveToCloud('${dest}')" class="bg-emerald-500 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase">Запази</button>
-                    <button onclick="saveToPDF('${dest}')" class="bg-blue-600 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase">PDF</button>
+                    <button onclick="saveToCloud('${dest}')" class="bg-emerald-500 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase shadow-lg">Запази</button>
+                    <button onclick="saveToPDF('${dest}')" class="bg-blue-600 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase shadow-lg">PDF</button>
                 </div>
             </div>
             <div class="mb-10 px-2">
-                <h4 class="text-[10px] font-black text-slate-400 mb-4 uppercase tracking-[0.2em] italic border-l-4 border-blue-500 pl-3">НАСТАНЯВАНЕ</h4>
+                <h4 class="text-[10px] font-black text-slate-400 mb-4 uppercase tracking-[0.2em] italic border-l-4 border-blue-500 pl-3">ПРЕПОРЪЧАНО НАСТАНЯВАНЕ</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">${hotelsHtml}</div>
             </div>
             <div class="px-2">${programHtml}</div>
@@ -146,6 +144,7 @@ function renderUI(dest, md) {
     res.scrollIntoView({ behavior: 'smooth' });
 }
 
+// PDF и Cloud функциите са запазени без промяна
 window.saveToPDF = function(n) {
     const el = document.getElementById('pdfArea');
     html2pdf().set({ margin: 10, filename: n+'.pdf', html2canvas: { scale: 3 }, jsPDF: { format: 'a4' } }).from(el).save();
@@ -153,10 +152,10 @@ window.saveToPDF = function(n) {
 
 async function saveToCloud(dest) {
     const { data: { user } } = await sbClient.auth.getUser();
-    if (!user) return alert("Влезте в профила!");
+    if (!user) return alert("Моля, влезте в профила си!");
     const content = document.getElementById('pdfArea').innerHTML;
     await sbClient.from('itineraries').insert([{ user_id: user.id, destination: dest, content }]);
-    alert("Запазено! ✨");
+    alert("Програмата е запазена! ✨");
 }
 
 document.addEventListener('DOMContentLoaded', () => {
