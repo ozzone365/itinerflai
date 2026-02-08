@@ -1,31 +1,7 @@
-// 1. Декларираме глобални променливи
-let S_URL, S_KEY, O_KEY, sbClient;
-
-// 2. Функция за зареждане на конфигурацията от Vercel API
-async function loadConfig() {
-    try {
-        const response = await fetch('/api/config');
-        if (!response.ok) throw new Error("API Route not found");
-        
-        const config = await response.json();
-        S_URL = config.supabaseUrl;
-        S_KEY = config.supabaseKey;
-        O_KEY = config.openaiKey;
-
-        // Инициализираме Supabase клиента едва след като имаме ключовете
-        sbClient = window.supabase.createClient(S_URL, S_KEY);
-        
-        console.log("Системата е готова и Supabase е свързан!");
-        
-        // Стартираме проверката на потребителя
-        checkUser();
-    } catch (err) {
-        console.error("Критична грешка при зареждане:", err);
-    }
+// Проверяваме дали вече не е дефинирана, за да избегнем SyntaxError
+if (typeof sbClient === 'undefined') {
+    var S_URL, S_KEY, O_KEY, sbClient;
 }
-
-// Стартираме зареждането веднага
-loadConfig();
 
 // Речник за преводи
 const dictionary = {
@@ -55,6 +31,29 @@ const dictionary = {
     }
 };
 
+async function loadConfig() {
+    try {
+        console.log("Зареждане на конфигурация...");
+        const response = await fetch('/api/config');
+        if (!response.ok) throw new Error("API Route not found");
+        
+        const config = await response.json();
+        S_URL = config.supabaseUrl;
+        S_KEY = config.supabaseKey;
+        O_KEY = config.openaiKey;
+
+        if (window.supabase) {
+            sbClient = window.supabase.createClient(S_URL, S_KEY);
+            console.log("Системата е готова и Supabase е свързан!");
+            checkUser();
+        } else {
+            console.error("Supabase библиотеката не е заредена в HTML!");
+        }
+    } catch (err) {
+        console.error("Критична грешка при зареждане:", err);
+    }
+}
+
 window.updateLang = function() {
     const l = document.getElementById('langSwitch').value;
     document.querySelectorAll('[data-lang]').forEach(el => {
@@ -63,18 +62,20 @@ window.updateLang = function() {
     });
 };
 
-// Проверка на сесията (използва sbClient)
 async function checkUser() {
     if (!sbClient) return; 
     const { data: { user } } = await sbClient.auth.getUser();
     if (user) {
-        document.getElementById('userStatus').innerHTML = `
-            <div class="flex items-center gap-4 animate-fade-in">
-                <span class="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider border border-blue-100">
-                    <i class="fas fa-user mr-2"></i>${user.email.split('@')[0]}
-                </span>
-                <button onclick="logout()" class="text-red-500 hover:text-red-700 text-[10px] font-black uppercase underline transition">Изход</button>
-            </div>`;
+        const statusDiv = document.getElementById('userStatus');
+        if (statusDiv) {
+            statusDiv.innerHTML = `
+                <div class="flex items-center gap-4 animate-fade-in">
+                    <span class="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider border border-blue-100">
+                        <i class="fas fa-user mr-2"></i>${user.email.split('@')[0]}
+                    </span>
+                    <button onclick="logout()" class="text-red-500 hover:text-red-700 text-[10px] font-black uppercase underline transition">Изход</button>
+                </div>`;
+        }
     }
 }
 
@@ -84,6 +85,8 @@ window.logout = async () => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    loadConfig(); // Викаме го тук, когато DOM е готов
+
     const submitBtn = document.getElementById('realSubmitBtn');
     const toggleBtn = document.getElementById('toggleBtn');
     
@@ -102,7 +105,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!sbClient) return alert("Системата все още се зарежда...");
             const email = document.getElementById('authEmail').value;
             const password = document.getElementById('authPassword').value;
-            const isReg = document.getElementById('authTitle').innerText.includes("Регистр") || document.getElementById('authTitle').innerText.includes("Register");
+            const authTitle = document.getElementById('authTitle').innerText;
+            const isReg = authTitle.includes("Регистр") || authTitle.includes("Register");
             
             try {
                 const { data, error } = isReg 
@@ -122,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function generatePlan(e) {
     e.preventDefault();
-    if (!O_KEY) return alert("AI ключът не е зареден.");
+    if (!O_KEY) return alert("Системата се зарежда, моля изчакайте 2 секунди...");
 
     document.getElementById('placeholder').classList.add('hidden');
     document.getElementById('result').classList.add('hidden');
@@ -151,9 +155,10 @@ async function generatePlan(e) {
 
 function renderUI(dest, content) {
     const res = document.getElementById('result');
+    if (!res) return;
     res.innerHTML = `
         <div id="pdfArea" class="animate-fade-in">
-            <div class="result-header flex justify-between items-center shadow-2xl mb-8">
+            <div class="result-header flex justify-between items-center shadow-2xl mb-8 p-6 bg-slate-900 text-white rounded-3xl">
                 <div>
                     <h2 class="text-4xl font-black uppercase italic">${dest}</h2>
                     <p class="text-[10px] opacity-70 uppercase tracking-widest mt-2">Генериран от ITINERFLAI AI</p>
