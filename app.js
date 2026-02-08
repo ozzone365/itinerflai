@@ -1,25 +1,31 @@
-// Конфигурация
-let S_URL, S_KEY, O_KEY;
+// 1. Декларираме глобални променливи
+let S_URL, S_KEY, O_KEY, sbClient;
 
+// 2. Функция за зареждане на конфигурацията от Vercel API
 async function loadConfig() {
-  try {
-    const response = await fetch('/api/config');
-    const config = await response.json();
-    S_URL = config.supabaseUrl;
-    S_KEY = config.supabaseKey;
-    O_KEY = config.openaiKey;
-    
-    console.log("Системата е готова!");
-    // Тук можеш да извикаш функцията, която инициализира Supabase
-    initApp(); 
-  } catch (err) {
-    console.error("Грешка при зареждане на конфигурацията:", err);
-  }
+    try {
+        const response = await fetch('/api/config');
+        if (!response.ok) throw new Error("API Route not found");
+        
+        const config = await response.json();
+        S_URL = config.supabaseUrl;
+        S_KEY = config.supabaseKey;
+        O_KEY = config.openaiKey;
+
+        // Инициализираме Supabase клиента едва след като имаме ключовете
+        sbClient = window.supabase.createClient(S_URL, S_KEY);
+        
+        console.log("Системата е готова и Supabase е свързан!");
+        
+        // Стартираме проверката на потребителя
+        checkUser();
+    } catch (err) {
+        console.error("Критична грешка при зареждане:", err);
+    }
 }
 
-loadConfig(); 
-
-const supabase = window.supabase.createClient(S_URL, S_KEY);
+// Стартираме зареждането веднага
+loadConfig();
 
 // Речник за преводи
 const dictionary = {
@@ -27,9 +33,7 @@ const dictionary = {
         loginBtn: "Влез / Регистрация", 
         heroTitle: "Твоят личен", 
         heroSub: "AI Архитект",
-        // ДОБАВИ ТОЗИ РЕД:
         heroSlogan: "Открийте скритите съкровища на всяка дестинация с персонализиран маршрут, създаден за секунди.",
-        
         iconHotels: "Хотели", iconFood: "Гурме", iconMap: "Програма", iconSmart: "Смарт",
         paramsTitle: "Параметри", labelDest: "Дестинация", labelDate: "Дата", labelDays: "Дни",
         labelTravelers: "Пътници", labelCurrency: "Валута", labelBudget: "Бюджет", labelStyle: "Стил",
@@ -41,9 +45,7 @@ const dictionary = {
         loginBtn: "Login / Register", 
         heroTitle: "Your Personal", 
         heroSub: "AI Architect",
-        // ДОБАВИ ТОЗИ РЕД:
         heroSlogan: "Discover the hidden gems of every destination with a personalized itinerary created in seconds.",
-        
         iconHotels: "Hotels", iconFood: "Gourmet", iconMap: "Itinerary", iconSmart: "Smart",
         paramsTitle: "Parameters", labelDest: "Destination", labelDate: "Date", labelDays: "Days",
         labelTravelers: "Travelers", labelCurrency: "Currency", labelBudget: "Budget", labelStyle: "Style",
@@ -53,7 +55,6 @@ const dictionary = {
     }
 };
 
-// Функция за смяна на езика
 window.updateLang = function() {
     const l = document.getElementById('langSwitch').value;
     document.querySelectorAll('[data-lang]').forEach(el => {
@@ -62,9 +63,10 @@ window.updateLang = function() {
     });
 };
 
-// Проверка на сесията
+// Проверка на сесията (използва sbClient)
 async function checkUser() {
-    const { data: { user } } = await supabase.auth.getUser();
+    if (!sbClient) return; 
+    const { data: { user } } = await sbClient.auth.getUser();
     if (user) {
         document.getElementById('userStatus').innerHTML = `
             <div class="flex items-center gap-4 animate-fade-in">
@@ -76,44 +78,52 @@ async function checkUser() {
     }
 }
 
-window.logout = async () => { await supabase.auth.signOut(); location.reload(); };
+window.logout = async () => { 
+    if (sbClient) await sbClient.auth.signOut(); 
+    location.reload(); 
+};
 
-// Управление на входа
 document.addEventListener('DOMContentLoaded', () => {
-    checkUser();
-    
     const submitBtn = document.getElementById('realSubmitBtn');
     const toggleBtn = document.getElementById('toggleBtn');
     
-    toggleBtn.onclick = () => {
-        const t = document.getElementById('authTitle');
-        const lang = document.getElementById('langSwitch').value;
-        const isLogin = t.innerText.includes("Вход") || t.innerText.includes("Login");
-        t.innerText = isLogin ? (lang === 'bg' ? "Регистрация" : "Register") : (lang === 'bg' ? "Вход" : "Login");
-        toggleBtn.innerText = isLogin ? (lang === 'bg' ? "Влез в акаунт" : "Back to Login") : (lang === 'bg' ? "Регистрация" : "Register");
-    };
+    if (toggleBtn) {
+        toggleBtn.onclick = () => {
+            const t = document.getElementById('authTitle');
+            const lang = document.getElementById('langSwitch').value;
+            const isLogin = t.innerText.includes("Вход") || t.innerText.includes("Login");
+            t.innerText = isLogin ? (lang === 'bg' ? "Регистрация" : "Register") : (lang === 'bg' ? "Вход" : "Login");
+            toggleBtn.innerText = isLogin ? (lang === 'bg' ? "Влез в акаунт" : "Back to Login") : (lang === 'bg' ? "Регистрация" : "Register");
+        };
+    }
 
-    submitBtn.onclick = async () => {
-        const email = document.getElementById('authEmail').value;
-        const password = document.getElementById('authPassword').value;
-        const isReg = document.getElementById('authTitle').innerText.includes("Регистр") || document.getElementById('authTitle').innerText.includes("Register");
-        
-        try {
-            const { data, error } = isReg 
-                ? await supabase.auth.signUp({ email, password }) 
-                : await supabase.auth.signInWithPassword({ email, password });
+    if (submitBtn) {
+        submitBtn.onclick = async () => {
+            if (!sbClient) return alert("Системата все още се зарежда...");
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+            const isReg = document.getElementById('authTitle').innerText.includes("Регистр") || document.getElementById('authTitle').innerText.includes("Register");
             
-            if (error) throw error;
-            if (isReg) alert("Успешно! Потвърдете имейла си.");
-            else location.reload();
-        } catch (e) { alert("Грешка: " + e.message); }
-    };
+            try {
+                const { data, error } = isReg 
+                    ? await sbClient.auth.signUp({ email, password }) 
+                    : await sbClient.auth.signInWithPassword({ email, password });
+                
+                if (error) throw error;
+                if (isReg) alert("Успешно! Потвърдете имейла си.");
+                else location.reload();
+            } catch (e) { alert("Грешка: " + e.message); }
+        };
+    }
 
-    document.getElementById('planForm').onsubmit = generatePlan;
+    const planForm = document.getElementById('planForm');
+    if (planForm) planForm.onsubmit = generatePlan;
 });
 
 async function generatePlan(e) {
     e.preventDefault();
+    if (!O_KEY) return alert("AI ключът не е зареден.");
+
     document.getElementById('placeholder').classList.add('hidden');
     document.getElementById('result').classList.add('hidden');
     document.getElementById('loader').classList.remove('hidden');
@@ -157,6 +167,4 @@ function renderUI(dest, content) {
             </div>
         </div>`;
     res.classList.remove('hidden');
-
 }
-
