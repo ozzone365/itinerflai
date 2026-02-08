@@ -11,11 +11,11 @@ async function init() {
             setupAuth();
             checkUser();
         }
-    } catch (e) { console.error("Грешка при старт:", e); }
+    } catch (e) { console.error("Старт грешка:", e); }
 }
 init();
 
-// --- ВХОД (СКРИВА ПРОЗОРЕЦА И ОБНОВЯВА МЕЙЛА) ---
+// --- ВХОД / ИЗХОД ---
 function setupAuth() {
     const btn = document.getElementById('realSubmitBtn');
     if (!btn) return;
@@ -23,16 +23,14 @@ function setupAuth() {
         const email = document.getElementById('authEmail').value;
         const pass = document.getElementById('authPassword').value;
         const isReg = document.getElementById('authTitle').innerText === 'Регистрация';
-        
         try {
             const { error } = isReg 
                 ? await sbClient.auth.signUp({ email, password: pass })
                 : await sbClient.auth.signInWithPassword({ email, password: pass });
-            
             if (error) throw error;
             document.getElementById('authModal').classList.add('hidden');
             checkUser();
-        } catch (err) { alert("Грешка: " + err.message); }
+        } catch (err) { alert(err.message); }
     };
 }
 
@@ -47,26 +45,31 @@ async function checkUser() {
     }
 }
 
-// --- ГЕНЕРИРАНЕ (С ПРАВИЛНИ ТРАВЕЛПАЙОУТС ЛИНКОВЕ) ---
+// --- ГЕНЕРИРАНЕ ---
 async function generatePlan(e) {
     e.preventDefault();
     const dest = document.getElementById('destination').value;
     const days = document.getElementById('days').value;
-    const affId = "701816"; // Твоят Travelpayouts ID
+    const affId = "701816"; 
 
     document.getElementById('placeholder').classList.add('hidden');
     document.getElementById('loader').classList.remove('hidden');
     document.getElementById('result').classList.add('hidden');
 
-    const prompt = `Направи елитен план за ${dest} за ${days} дни. 
-    1. ХОТЕЛИ: Дай 4 опции (Лукс, Бутик, Бюджет, Апартамент). ЛИНК: https://www.booking.com/searchresults.html?ss=${dest}&aid=${affId}
-    2. ПРОГРАМА: Поне 3 забележителности на секция. Формат:
+    const prompt = `Make a rich travel plan for ${dest} for ${days} days. 
+    FORMAT HOTELS:
+    H: Luxury | [Name] | https://www.booking.com/searchresults.html?ss=${dest}&aid=${affId}
+    H: Boutique | [Name] | https://www.booking.com/searchresults.html?ss=${dest}&aid=${affId}
+    H: Budget | [Name] | https://www.booking.com/searchresults.html?ss=${dest}&aid=${affId}
+    H: Apartment | [Name] | https://www.booking.com/searchresults.html?ss=${dest}&aid=${affId}
+
+    PROGRAM FORMAT:
     ### Ден [X]
-    ☕ ЗАКУСКА: [Място] | [Описание 2 изречения] | https://www.google.com/maps/search/${dest}+[Място]
-    🏛️ СУТРИН: [Обект1, Обект2, Обект3] | [Описание на маршрута] | https://www.google.com/maps/search/${dest}+[Обекти]
-    🍴 ОБЯД: [Ресторант] | [Защо си струва] | https://www.google.com/maps/search/${dest}+[Ресторант]
-    📸 СЛЕДОБЕД: [Обект1, Обект2, Обект3] | [Инфо и история] | https://www.google.com/maps/search/${dest}+[Обекти]
-    🌙 ВЕЧЕРЯ: [Ресторант] | [Атмосфера] | https://www.google.com/maps/search/${dest}+[Ресторант]`;
+    ITEM: ☕ ЗАКУСКА | [Място] | [Описание 2 изречения] | https://www.google.com/maps/search/${dest}+[Място]
+    ITEM: 🏛️ СУТРИН | [3-4 обекта] | [Описание на маршрута] | https://www.google.com/maps/search/${dest}+Sightseeing
+    ITEM: 🍴 ОБЯД | [Място] | [Защо си струва] | https://www.google.com/maps/search/${dest}+Restaurant
+    ITEM: 📸 СЛЕДОБЕД | [3-4 обекта] | [Интересни факти] | https://www.google.com/maps/search/${dest}+Attractions
+    ITEM: 🌙 ВЕЧЕРЯ | [Място] | [Атмосфера] | https://www.google.com/maps/search/${dest}+Dinner`;
 
     try {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -74,66 +77,58 @@ async function generatePlan(e) {
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${O_KEY}` },
             body: JSON.stringify({
                 model: "gpt-4o",
-                messages: [{role: "system", content: "Ти си професионален гид. Генерирай само РЕАЛНИ локации."}, {role: "user", content: prompt}]
+                messages: [{role: "system", content: "Пиши на БЪЛГАРСКИ. Използвай само зададения формат."}, {role: "user", content: prompt}]
             })
         });
         const data = await response.json();
         renderUI(dest, data.choices[0].message.content);
-    } catch (err) { alert("AI Грешка!"); }
+    } catch (err) { alert("Грешка!"); }
     finally { document.getElementById('loader').classList.add('hidden'); }
 }
 
 function renderUI(dest, md) {
     const res = document.getElementById('result');
-    const affId = "701816";
+    
+    // 1. Обработка на хотели
+    const hotelMatches = [...md.matchAll(/H: (.*?) \| (.*?) \| (https.*?)\n/g)];
+    let hotelsHtml = hotelMatches.map(m => `
+        <div class="bg-blue-50/50 p-4 rounded-2xl flex justify-between items-center border border-blue-100 shadow-sm">
+            <div><p class="text-[9px] font-black text-blue-500 uppercase">${m[1]}</p><p class="font-bold text-slate-800 text-xs">${m[2]}</p></div>
+            <a href="${m[3]}" target="_blank" rel="noopener" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase shadow-lg">Резервирай</a>
+        </div>`).join('');
 
-    // Обработка на хотели
-    const hotelLines = md.match(/(Лукс|Бутик|Бюджет|Апартамент): (.*?) \| (https.*?)\n/g) || [];
-    let hotelsHtml = hotelLines.map(line => {
-        const [type, rest] = line.split(':');
-        const [name, url] = rest.split('|');
-        return `
-        <div class="bg-indigo-50/50 p-4 rounded-2xl flex justify-between items-center border border-indigo-100 shadow-sm">
-            <div><p class="text-[9px] font-black text-indigo-500 uppercase">${type.trim()}</p><p class="font-bold text-slate-800 text-xs">${name.trim()}</p></div>
-            <a href="${url.trim()}" target="_blank" rel="noopener noreferrer" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase shadow-lg hover:bg-slate-900 transition">Резервирай</a>
-        </div>`;
-    }).join('');
-
-    // Обработка на програмата (реда под ред с икони)
+    // 2. Обработка на програмата
     let formatted = md
-        .replace(/### (.*)/g, '<div class="text-xl font-black text-blue-600 border-b-2 border-blue-100 mt-12 mb-6 uppercase italic pb-2">$1</div>')
-        .replace(/(☕|🏛️|🍴|📸|🌙) (.*?): (.*?) \| (.*?) \| (https.*?)/g, `
-            <div class="py-6 border-b border-slate-50 hover:bg-blue-50/20 px-3 transition rounded-2xl group">
-                <div class="flex items-start justify-between gap-4">
-                    <div class="flex items-start gap-4">
-                        <span class="text-3xl mt-1">$1</span>
-                        <div>
-                            <b class="text-[9px] uppercase text-slate-400 block tracking-widest">$2</b>
-                            <span class="text-slate-900 font-bold text-lg leading-tight block mb-1">$3</span>
-                            <p class="text-slate-500 text-xs leading-relaxed italic">$4</p>
-                        </div>
+        .replace(/### (.*)/g, '<div class="text-2xl font-black text-slate-900 border-b-4 border-blue-600 mt-12 mb-6 uppercase italic pb-2">$1</div>')
+        .replace(/ITEM: (.*?) \| (.*?) \| (.*?) \| (https.*?)/g, `
+            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 mb-4 flex justify-between items-center group hover:shadow-md transition">
+                <div class="flex gap-4 items-start">
+                    <span class="text-3xl">$1</span>
+                    <div>
+                        <b class="text-slate-900 font-bold text-lg block">$2</b>
+                        <p class="text-slate-500 text-xs leading-relaxed mt-1 italic">$3</p>
                     </div>
-                    <a href="$5" target="_blank" rel="noopener noreferrer" class="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition flex-shrink-0"><i class="fas fa-map-marker-alt"></i></a>
                 </div>
+                <a href="$4" target="_blank" rel="noopener" class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-blue-600 transition"><i class="fas fa-map-marker-alt"></i></a>
             </div>
         `);
 
     res.innerHTML = `
-        <div id="pdfArea" class="bg-white p-6 md:p-12 rounded-[4rem] shadow-2xl border-t-[15px] border-blue-600 max-w-5xl mx-auto">
-            <div class="bg-slate-900 p-10 rounded-[3rem] text-white mb-10 flex justify-between items-center border-b-4 border-blue-500 shadow-xl">
-                <div><h2 class="text-5xl font-black italic uppercase tracking-tighter">${dest}</h2><p class="text-[10px] opacity-40 uppercase tracking-[0.4em] mt-1 italic">Premium Architect by Itinerflai</p></div>
+        <div id="pdfArea" class="max-w-4xl mx-auto pb-20">
+            <div class="bg-slate-900 p-10 rounded-[3rem] text-white mb-8 flex justify-between items-center shadow-2xl border-b-8 border-blue-600">
+                <div><h2 class="text-5xl font-black italic uppercase">${dest}</h2><p class="text-[10px] opacity-50 tracking-[0.3em]">PREMIUM TRAVEL GUIDE</p></div>
                 <div class="flex gap-2">
-                    <button onclick="saveToCloud('${dest}')" class="bg-emerald-500 text-white px-6 py-4 rounded-2xl font-black text-[10px] uppercase shadow-lg hover:bg-slate-800 transition">Запази</button>
-                    <button onclick="saveToPDF('${dest}')" class="bg-blue-600 text-white px-6 py-4 rounded-2xl font-black text-[10px] uppercase shadow-lg hover:bg-slate-800 transition">PDF</button>
+                    <button onclick="saveToCloud('${dest}')" class="bg-emerald-500 text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase shadow-lg">ЗАПАЗИ</button>
+                    <button onclick="saveToPDF('${dest}')" class="bg-blue-600 text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase shadow-lg">PDF</button>
                 </div>
             </div>
-            
-            <div class="mb-14">
-                <h4 class="text-[12px] font-black uppercase text-indigo-500 mb-6 tracking-[0.3em] flex items-center gap-2"><i class="fas fa-hotel"></i> ПРЕПОРЪЧАНО НАСТАНЯВАНЕ</h4>
+
+            <div class="mb-10">
+                <h4 class="text-[12px] font-black text-slate-400 mb-4 uppercase tracking-widest flex items-center gap-2"><i class="fas fa-hotel"></i> Препоръчани Хотели</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${hotelsHtml}</div>
             </div>
 
-            <div class="itinerary-body text-slate-700">${formatted.substring(formatted.indexOf('<div class="text-xl'))}</div>
+            <div class="space-y-4">${formatted.substring(formatted.indexOf('<div class="text-2xl'))}</div>
         </div>`;
     
     res.classList.remove('hidden');
@@ -142,15 +137,15 @@ function renderUI(dest, md) {
 
 window.saveToPDF = function(n) {
     const el = document.getElementById('pdfArea');
-    html2pdf().set({ margin: 10, filename: n+'-plan.pdf', html2canvas: { scale: 2 }, jsPDF: { format: 'a4', orientation: 'portrait' } }).from(el).save();
+    html2pdf().set({ margin: 10, filename: n+'.pdf', html2canvas: { scale: 2 }, jsPDF: { format: 'a4' } }).from(el).save();
 };
 
 async function saveToCloud(dest) {
     const { data: { user } } = await sbClient.auth.getUser();
-    if (!user) return alert("Влезте в профила си!");
+    if (!user) return alert("Влезте в профила!");
     const content = document.getElementById('pdfArea').innerHTML;
     await sbClient.from('itineraries').insert([{ user_id: user.id, destination: dest, content }]);
-    alert("Програмата е запазена успешно! ✨");
+    alert("Запазено! ✨");
 }
 
 document.addEventListener('DOMContentLoaded', () => {
