@@ -14,7 +14,6 @@ async function init() {
 }
 init();
 
-// Функцията за вход, която поиска да не пипаме
 function setupAuth() {
     const btn = document.getElementById('realSubmitBtn');
     if (!btn) return;
@@ -39,7 +38,7 @@ async function checkUser() {
         document.getElementById('userStatus').innerHTML = `
             <div class="flex items-center gap-3 bg-slate-800 p-2 px-4 rounded-xl border border-slate-700">
                 <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">${user.email}</span>
-                <button onclick="sbClient.auth.signOut().then(() => location.reload())" class="text-white hover:text-red-500 transition"><i class="fas fa-sign-out-alt"></i></button>
+                <button onclick="sbClient.auth.signOut().then(() => location.reload())" class="text-white hover:text-red-500 transition px-2"><i class="fas fa-sign-out-alt"></i></button>
             </div>`;
     }
 }
@@ -53,10 +52,10 @@ async function generatePlan(e) {
     document.getElementById('loader').classList.remove('hidden');
     document.getElementById('result').classList.add('hidden');
 
-    // ТУК Е ПРОМЯНАТА: Стриктна подредба на деня без промяна на формата
     const prompt = `Направи елитен план за ${dest} за ${days} дни на БЪЛГАРСКИ. 
+    БЕЗ СИМВОЛИ КАТО ####. 
     1. ХОТЕЛИ: Дай 4 хотела (Лукс, Бутик, Бюджет, Апартамент). Формат: "ХОТЕЛ: [Тип] - [Име]"
-    2. ПРОГРАМА: За всеки ден следвай точно тази подредба:
+    2. ПРОГРАМА (СЛЕДВАЙ ТОЧНО):
     ДЕН: [Номер]
     ☕ ЗАКУСКА: [Място] | [Описание]
     🏛️ ЗАБЕЛЕЖИТЕЛНОСТИ: [Обекти] | [Описание]
@@ -70,7 +69,7 @@ async function generatePlan(e) {
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${O_KEY}` },
             body: JSON.stringify({
                 model: "gpt-4o",
-                messages: [{role: "system", content: "Ти си професионален травъл агент. Пиши само на български. Задължително ползвай емоджи в началото на всяка точка от програмата."}, {role: "user", content: prompt}]
+                messages: [{role: "system", content: "Ти си професионален травъл агент. Не използвай Маркдаун символи (#). Всяка точка от програмата да започва с емоджи и да има ':'."}, {role: "user", content: prompt}]
             })
         });
         const data = await response.json();
@@ -86,9 +85,10 @@ function renderUI(dest, md) {
     const lines = md.split('\n').filter(l => l.trim() !== "");
 
     lines.forEach(line => {
-        // 1. ПАРСВАНЕ НА ХОТЕЛИ (Твоят дизайн)
-        if (line.toUpperCase().includes('ХОТЕЛ:')) {
-            const content = line.split(':')[1];
+        const cleanLine = line.replace(/#/g, '').trim();
+
+        if (cleanLine.toUpperCase().includes('ХОТЕЛ:')) {
+            const content = cleanLine.split(':')[1];
             const [type, name] = content.split('-');
             const hotelUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest + " " + (name || ""))}&aid=701816`;
             hotelsHtml += `
@@ -97,13 +97,11 @@ function renderUI(dest, md) {
                 <a href="${hotelUrl}" target="_blank" rel="noopener noreferrer" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase shadow-lg">Резервирай</a>
             </div>`;
         }
-        // 2. ПАРСВАНЕ НА ЗАГЛАВИЯ НА ДНИ (Твоят дизайн)
-        else if (line.toUpperCase().includes('ДЕН')) {
-            programHtml += `<div class="text-3xl font-black text-slate-900 border-b-8 border-blue-600/20 mt-16 mb-8 uppercase italic pb-2">${line}</div>`;
+        else if (cleanLine.toUpperCase().startsWith('ДЕН')) {
+            programHtml += `<div class="text-3xl font-black text-slate-900 border-b-8 border-blue-600/20 mt-16 mb-8 uppercase italic pb-2">${cleanLine}</div>`;
         }
-        // 3. ПАРСВАНЕ НА ПРОГРАМА (Твоят дизайн на белите карти)
-        else if (/[\u{1F300}-\u{1F9FF}]/u.test(line) && line.includes(':')) {
-            const [titlePart, descPart] = line.split(':');
+        else if (/[\u{1F300}-\u{1F9FF}]/u.test(cleanLine) && cleanLine.includes(':')) {
+            const [titlePart, descPart] = cleanLine.split(':');
             const mapUrl = `http://googleusercontent.com/maps.google.com/search?q=${encodeURIComponent(dest + " " + titlePart)}`;
             programHtml += `
             <div class="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 mb-6 flex justify-between items-center group transition hover:border-blue-200">
@@ -129,15 +127,12 @@ function renderUI(dest, md) {
                     <button onclick="saveToPDF('${dest}')" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase shadow-xl hover:scale-105 transition">PDF</button>
                 </div>
             </div>
-
             <div class="mb-16 px-4">
                 <h4 class="text-sm font-black text-slate-400 mb-6 uppercase tracking-[0.3em] italic underline decoration-blue-500 decoration-4"> ПРЕПОРЪЧАНО НАСТАНЯВАНЕ</h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">${hotelsHtml || "<p class='text-slate-400'>Търсим хотели...</p>"}</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">${hotelsHtml || "<p>Генериране...</p>"}</div>
             </div>
-
-            <div class="px-4">${programHtml || "<p class='text-slate-400 italic'>Генериране...</p>"}</div>
+            <div class="px-4">${programHtml || "<p>Генериране...</p>"}</div>
         </div>`;
-    
     res.classList.remove('hidden');
     res.scrollIntoView({ behavior: 'smooth' });
 }
