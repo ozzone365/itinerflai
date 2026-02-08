@@ -13,7 +13,7 @@ async function init() {
             setupAuth();
             checkUser();
         }
-    } catch (e) { console.error("Грешка при старт:", e); }
+    } catch (e) { console.error("Грешка:", e); }
 }
 init();
 
@@ -56,7 +56,7 @@ async function generatePlan(e) {
     e.preventDefault();
     const dest = document.getElementById('destination').value;
     const days = document.getElementById('days').value;
-    const affId = "701816"; // Твоето ново Travelpayouts ID
+    const affId = "701816"; // Твоето Travelpayouts ID
 
     document.getElementById('placeholder').classList.add('hidden');
     document.getElementById('loader').classList.remove('hidden');
@@ -65,19 +65,19 @@ async function generatePlan(e) {
     const prompt = `Направи богат туристически план за ${dest} за ${days} дни. 
     ФОРМАТ ЗА ХОТЕЛИ (ЗАДЪЛЖИТЕЛЕН):
     HOTEL_START
-    Лукс: [Име] | https://www.booking.com/searchresults.html?ss=$[Име]&aid=${affId}
-    Бутик: [Име] | https://www.booking.com/searchresults.html?ss=$[Име]&aid=${affId}
-    Бюджет: [Име] | https://www.booking.com/searchresults.html?ss=$[Име]&aid=${affId}
-    Апартамент: [Име] | https://www.booking.com/searchresults.html?ss=$[Име]&aid=${affId}
+    Лукс: [Име] | https://www.booking.com/searchresults.html?ss=${dest}+${affId}&aid=${affId}
+    Бутик: [Име] | https://www.booking.com/searchresults.html?ss=${dest}+${affId}&aid=${affId}
+    Бюджет: [Име] | https://www.booking.com/searchresults.html?ss=${dest}+${affId}&aid=${affId}
+    Апартамент: [Име] | https://www.booking.com/searchresults.html?ss=${dest}+${affId}&aid=${affId}
     HOTEL_END
 
-    ПРОГРАМА (За всеки ден дай ПОНЕ 3 забележителности във всяка част):
+    ПРОГРАМА (За всеки ден дай ПОНЕ 3-4 обекта на секция. Добави 2 изречения интересна инфо под всеки обект):
     ### Ден [X]
-    ☕ ЗАКУСКА: [Място] | https://www.google.com/maps/search/?api=1&query=${dest}+[Място]
-    🏛️ СУТРИН (3-4 обекта): [Обект1, Обект2, Обект3] | https://www.google.com/maps/search/?api=1&query=${dest}+[Обекти]
-    🍴 ОБЯД: [Място] | https://www.google.com/maps/search/?api=1&query=${dest}+[Място]
-    📸 СЛЕДОБЕД (3-4 обекта): [Обект1, Обект2, Обект3] | https://www.google.com/maps/search/?api=1&query=${dest}+[Обекти]
-    🌙 ВЕЧЕРЯ: [Място] | https://www.google.com/maps/search/?api=1&query=${dest}+[Място]`;
+    ☕ ЗАКУСКА: [Име] - [Кратко описание] | [URL]
+    🏛️ СУТРИН: [Обект1, Обект2, Обект3] - [Кратко описание на маршрута] | [URL]
+    🍴 ОБЯД: [Име] - [Защо си струва] | https://ryan.air-bg.com/zaplashtane-na-samoleten-bilet
+    📸 СЛЕДОБЕД: [Обект1, Обект2, Обект3] - [История/Инфо] | [URL]
+    🌙 ВЕЧЕРЯ: [Име] - [Атмосфера] | https://ryan.air-bg.com/zaplashtane-na-samoleten-bilet`;
 
     try {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -85,7 +85,7 @@ async function generatePlan(e) {
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${O_KEY}` },
             body: JSON.stringify({
                 model: "gpt-4o",
-                messages: [{role: "system", content: "Ти си професионален гид. Използвай само реални обекти и линкове."}, {role: "user", content: prompt}]
+                messages: [{role: "system", content: "Ти си елитен травъл дизайнер. Генерирай реални места и включвай афилиейт параметри в линковете, където е възможно."}, {role: "user", content: prompt}]
             })
         });
         const data = await response.json();
@@ -103,8 +103,11 @@ function renderUI(dest, md) {
     if (hotelMatch) {
         const lines = hotelMatch[1].trim().split('\n');
         hotelsHtml = lines.map(line => {
-            const [type, rest] = line.split(':');
-            const [name, url] = rest.split('|');
+            const parts = line.split(':');
+            const type = parts[0];
+            const content = parts[1].split('|');
+            const name = content[0];
+            const url = content[1];
             return `
             <div class="bg-indigo-50/50 p-4 rounded-2xl flex justify-between items-center border border-indigo-100 shadow-sm">
                 <div><p class="text-[9px] font-black text-indigo-500 uppercase">${type.trim()}</p><p class="font-bold text-slate-800 text-xs">${name.trim()}</p></div>
@@ -117,27 +120,33 @@ function renderUI(dest, md) {
 
     let formatted = programMd
         .replace(/### (.*)/g, '<div class="text-xl font-black text-blue-600 border-b-2 border-blue-100 mt-12 mb-6 uppercase italic pb-2">$1</div>')
-        .replace(/(☕|🏛️|🍴|📸|🌙) (.*?): (.*?) \| (.*)/g, `
-            <div class="flex items-center justify-between py-4 border-b border-slate-50 hover:bg-slate-50/50 px-2 transition">
-                <div class="flex items-center gap-4">
-                    <span class="text-xl">$1</span>
-                    <div><b class="text-[9px] uppercase text-slate-400 block tracking-widest">$2</b><span class="text-slate-800 font-bold text-sm">$3</span></div>
+        .replace(/(☕|🏛️|🍴|📸|🌙) (.*?): (.*?) - (.*?) \| (.*)/g, `
+            <div class="py-5 border-b border-slate-50 hover:bg-slate-50/30 px-2 transition">
+                <div class="flex items-start justify-between">
+                    <div class="flex items-start gap-4">
+                        <span class="text-2xl mt-1">$1</span>
+                        <div>
+                            <b class="text-[10px] uppercase text-slate-400 block tracking-widest">$2</b>
+                            <span class="text-slate-800 font-bold text-lg leading-tight">$3</span>
+                            <p class="text-slate-500 text-xs mt-1 leading-relaxed">$4</p>
+                        </div>
+                    </div>
+                    <a href="$5" target="_blank" class="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white transition flex-shrink-0 shadow-sm"><i class="fas fa-external-link-alt"></i></a>
                 </div>
-                <a href="$4" target="_blank" class="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white transition"><i class="fas fa-map-marker-alt"></i></a>
             </div>
         `);
 
     res.innerHTML = `
         <div id="pdfArea" class="bg-white p-6 md:p-12 rounded-[3.5rem] shadow-2xl border-t-[15px] border-blue-600 max-w-5xl mx-auto">
             <div class="bg-slate-900 p-8 rounded-[2.5rem] text-white mb-10 flex justify-between items-center">
-                <div><h2 class="text-4xl font-black italic uppercase">${dest}</h2><p class="text-[9px] opacity-40">Premium AI Architect</p></div>
+                <div><h2 class="text-4xl font-black italic uppercase tracking-tighter">${dest}</h2><p class="text-[9px] opacity-40 uppercase tracking-[0.3em] mt-1 italic">Itinerflai Premium Experience</p></div>
                 <div class="flex gap-2">
-                    <button onclick="saveToCloud('${dest}')" class="bg-emerald-500 text-white px-5 py-3 rounded-xl font-black text-[9px] uppercase shadow-lg">Запази</button>
-                    <button onclick="saveToPDF('${dest}')" class="bg-blue-600 text-white px-5 py-3 rounded-xl font-black text-[9px] uppercase shadow-lg">PDF</button>
+                    <button onclick="saveToCloud('${dest}')" class="bg-emerald-500 text-white px-5 py-3 rounded-xl font-black text-[9px] uppercase shadow-lg hover:scale-105 transition">Запази</button>
+                    <button onclick="saveToPDF('${dest}')" class="bg-blue-600 text-white px-5 py-3 rounded-xl font-black text-[9px] uppercase shadow-lg hover:scale-105 transition">PDF</button>
                 </div>
             </div>
             <div class="mb-12">
-                <h4 class="text-[11px] font-black uppercase text-indigo-500 mb-5 tracking-[0.2em] italic">Препоръчано настаняване</h4>
+                <h4 class="text-[11px] font-black uppercase text-indigo-500 mb-5 tracking-[0.2em] flex items-center gap-2"><i class="fas fa-star text-xs"></i> ПРЕПОРЪЧАНО НАСТАНЯВАНЕ</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">${hotelsHtml}</div>
             </div>
             <div class="itinerary-body">${formatted}</div>
@@ -149,15 +158,15 @@ function renderUI(dest, md) {
 
 window.saveToPDF = function(n) {
     const el = document.getElementById('pdfArea');
-    html2pdf().set({ margin: 10, filename: n+'.pdf', html2canvas: { scale: 2 }, jsPDF: { format: 'a4' } }).from(el).save();
+    html2pdf().set({ margin: 10, filename: n+'-plan.pdf', html2canvas: { scale: 2 }, jsPDF: { format: 'a4', orientation: 'portrait' } }).from(el).save();
 };
 
 async function saveToCloud(dest) {
     const { data: { user } } = await sbClient.auth.getUser();
     if (!user) return alert("Влезте в профила!");
     const content = document.getElementById('pdfArea').innerHTML;
-    await sbClient.from('itineraries').insert([{ user_id: user.id, destination: dest, content }]);
-    alert("Запазено! ✨");
+    const { error } = await sbClient.from('itineraries').insert([{ user_id: user.id, destination: dest, content }]);
+    if (error) alert("Грешка при запис."); else alert("Програмата е запазена в облака! ✨");
 }
 
 document.addEventListener('DOMContentLoaded', () => {
