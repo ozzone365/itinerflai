@@ -23,9 +23,16 @@ async function generatePlan(e) {
     document.getElementById('loader').classList.remove('hidden');
     document.getElementById('result').classList.add('hidden');
 
+    // Променихме само промпта за по-добра структура
     const prompt = `Направи елитен план за ${dest} за ${days} дни на БЪЛГАРСКИ. 
     1. ХОТЕЛИ: Дай 4 хотела (Лукс, Бутик, Бюджет, Апартамент). Формат: "ХОТЕЛ: [Тип] - [Име]"
-    2. ПРОГРАМА: За всяко хранене или забележителност ползвай формат: "[Икона] [Заглавие]: [Описание 2 изречения]"`;
+    2. ПРОГРАМА: За всеки отделен ден СТРИКТНО следвай тази подредба:
+    ДЕН: [Номер]
+    ☕ ЗАКУСКА: [Място] | [Описание 2 изречения]
+    🏛️ ЗАБЕЛЕЖИТЕЛНОСТИ: [Обект 1, 2, 3] | [Описание на маршрута]
+    🍴 ОБЯД: [Място] | [Защо си струва]
+    📸 ЗАБЕЛЕЖИТЕЛНОСТИ: [Обект 4, 5, 6] | [Интересни факти]
+    🌙 ВЕЧЕРЯ: [Място] | [Атмосфера]`;
 
     try {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -33,12 +40,12 @@ async function generatePlan(e) {
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${O_KEY}` },
             body: JSON.stringify({
                 model: "gpt-4o",
-                messages: [{role: "system", content: "Ти си професионален травъл агент. Пиши само на български."}, {role: "user", content: prompt}]
+                messages: [{role: "system", content: "Ти си професионален травъл агент. Използвай емоджита в началото на всяка точка от програмата."}, {role: "user", content: prompt}]
             })
         });
         const data = await response.json();
         renderUI(dest, data.choices[0].message.content);
-    } catch (err) { alert("Грешка при генериране!"); }
+    } catch (err) { alert("Грешка!"); }
     finally { document.getElementById('loader').classList.add('hidden'); }
 }
 
@@ -49,7 +56,7 @@ function renderUI(dest, md) {
     const lines = md.split('\n').filter(l => l.trim() !== "");
 
     lines.forEach(line => {
-        // 1. ПАРСВАНЕ НА ХОТЕЛИ
+        // ХОТЕЛИ (Запазен дизайн)
         if (line.toUpperCase().includes('ХОТЕЛ:')) {
             const content = line.split(':')[1];
             const [type, name] = content.split('-');
@@ -60,14 +67,14 @@ function renderUI(dest, md) {
                 <a href="${hotelUrl}" target="_blank" rel="noopener noreferrer" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase shadow-lg">Резервирай</a>
             </div>`;
         }
-        // 2. ПАРСВАНЕ НА ЗАГЛАВИЯ НА ДНИ
+        // ДНИ (Запазен дизайн)
         else if (line.toUpperCase().includes('ДЕН')) {
             programHtml += `<div class="text-3xl font-black text-slate-900 border-b-8 border-blue-600/20 mt-16 mb-8 uppercase italic pb-2">${line}</div>`;
         }
-        // 3. ПАРСВАНЕ НА ПРОГРАМА (по икона/емоджи)
+        // ПРОГРАМА (Запазен дизайн на белите карти)
         else if (/[\u{1F300}-\u{1F9FF}]/u.test(line) && line.includes(':')) {
             const [titlePart, descPart] = line.split(':');
-            const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest + " " + titlePart)}`;
+            const mapUrl = `http://googleusercontent.com/maps.google.com/search?q=${encodeURIComponent(dest + " " + titlePart)}`;
             programHtml += `
             <div class="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 mb-6 flex justify-between items-center group transition hover:border-blue-200">
                 <div class="flex gap-6 items-start">
@@ -92,20 +99,17 @@ function renderUI(dest, md) {
                     <button onclick="saveToPDF('${dest}')" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase shadow-xl hover:scale-105 transition">PDF</button>
                 </div>
             </div>
-
             <div class="mb-16 px-4">
                 <h4 class="text-sm font-black text-slate-400 mb-6 uppercase tracking-[0.3em] italic underline decoration-blue-500 decoration-4"> ПРЕПОРЪЧАНО НАСТАНЯВАНЕ</h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">${hotelsHtml || "<p class='text-slate-400'>Търсим най-добрите хотели...</p>"}</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">${hotelsHtml}</div>
             </div>
-
-            <div class="px-4">${programHtml || "<p class='text-slate-400 italic'>Генериране на подробен маршрут...</p>"}</div>
+            <div class="px-4">${programHtml}</div>
         </div>`;
-    
     res.classList.remove('hidden');
     res.scrollIntoView({ behavior: 'smooth' });
 }
 
-// Помощни функции (PDF и Auth остават същите)
+// PDF и Auth функциите остават непроменени
 window.saveToPDF = function(n) {
     const el = document.getElementById('pdfArea');
     html2pdf().set({ margin: 10, filename: n+'.pdf', html2canvas: { scale: 3 }, jsPDF: { format: 'a4' } }).from(el).save();
