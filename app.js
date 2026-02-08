@@ -10,7 +10,7 @@ async function init() {
             setupAuth();
             checkUser();
         }
-    } catch (e) { console.error("Грешка:", e); }
+    } catch (e) { console.error("Грешка при инит:", e); }
 }
 init();
 
@@ -20,7 +20,8 @@ function setupAuth() {
     btn.onclick = async () => {
         const email = document.getElementById('authEmail').value;
         const pass = document.getElementById('authPassword').value;
-        const isReg = document.getElementById('authTitle').innerText.includes('Регистрация');
+        const title = document.getElementById('authTitle').innerText;
+        const isReg = title.includes('Регистрация');
         try {
             const { error } = isReg 
                 ? await sbClient.auth.signUp({ email, password: pass })
@@ -28,17 +29,18 @@ function setupAuth() {
             if (error) throw error;
             document.getElementById('authModal').classList.add('hidden');
             checkUser();
-        } catch (err) { alert(err.message); }
+        } catch (err) { alert("Грешка: " + err.message); }
     };
 }
 
 async function checkUser() {
     const { data: { user } } = await sbClient.auth.getUser();
-    if (user && document.getElementById('userStatus')) {
-        document.getElementById('userStatus').innerHTML = `
+    const status = document.getElementById('userStatus');
+    if (user && status) {
+        status.innerHTML = `
             <div class="flex items-center gap-3 bg-slate-800 p-2 px-4 rounded-xl border border-slate-700">
                 <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">${user.email}</span>
-                <button onclick="sbClient.auth.signOut().then(() => location.reload())" class="text-white hover:text-red-500 transition px-2"><i class="fas fa-sign-out-alt"></i></button>
+                <button onclick="sbClient.auth.signOut().then(() => location.reload())" class="text-white hover:text-red-500 transition ml-2"><i class="fas fa-sign-out-alt"></i></button>
             </div>`;
     }
 }
@@ -54,13 +56,15 @@ async function generatePlan(e) {
 
     const prompt = `Направи елитен план за ${dest} за ${days} дни на БЪЛГАРСКИ. 
     БЕЗ СИМВОЛИ # ИЛИ *. 
-    1. Дай 4 хотела: ХОТЕЛ: [Тип] - [Име]
-    2. За всеки ден ЗАДЪЛЖИТЕЛНО: 
-    - ☕ ЗАКУСКА: [Име] | [Описание]
-    - 🏛️ ЗАБЕЛЕЖИТЕЛНОСТИ: [Минимум 3 обекта] | [Описание]
-    - 🍴 ОБЯД: [Ресторант] | [Описание]
-    - 📸 ЗАБЕЛЕЖИТЕЛНОСТИ: [Минимум 3 нови обекта] | [Описание]
-    - 🌙 ВЕЧЕРЯ: [Ресторант] | [Описание]`;
+    СТРУКТУРА:
+    ХОТЕЛ: [Лукс/Бутик] - [Име] (Дай точно 4 такива реда най-отгоре)
+    За всеки ден задължително дай:
+    ДЕН: [Номер]
+    ☕ ЗАКУСКА: [Име] | [Описание]
+    🏛️ ЗАБЕЛЕЖИТЕЛНОСТИ: [Минимум 3 обекта] | [Описание]
+    🍴 ОБЯД: [Ресторант] | [Описание]
+    📸 ЗАБЕЛЕЖИТЕЛНОСТИ: [Още 3 обекта] | [Описание]
+    🌙 ВЕЧЕРЯ: [Ресторант] | [Описание]`;
 
     try {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -68,12 +72,12 @@ async function generatePlan(e) {
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${O_KEY}` },
             body: JSON.stringify({
                 model: "gpt-4o",
-                messages: [{role: "system", content: "Ти си професионален гид. Пиши на нови редове. Всяка активност да започва с емоджи и да има ':'."}, {role: "user", content: prompt}]
+                messages: [{role: "system", content: "Ти си премиум гид. Не ползвай маркдаун. Всеки ред с активност ЗАДЪЛЖИТЕЛНО започва с емоджи и има ':' за разделител."}, {role: "user", content: prompt}]
             })
         });
         const data = await response.json();
         renderUI(dest, data.choices[0].message.content);
-    } catch (err) { alert("Грешка!"); }
+    } catch (err) { alert("Грешка при генериране!"); }
     finally { document.getElementById('loader').classList.add('hidden'); }
 }
 
@@ -85,42 +89,39 @@ function renderUI(dest, md) {
     const lines = md.replace(/[*#]/g, '').split('\n').filter(l => l.trim() !== "");
 
     lines.forEach(line => {
-        const cleanLine = line.trim();
-        const upperLine = cleanLine.toUpperCase();
+        const upperLine = line.toUpperCase();
         
-        // 1. ПОДОБРЕНО РАЗПОЗНАВАНЕ НА ХОТЕЛИ
-        if (upperLine.includes('ХОТЕЛ')) {
-            let content = cleanLine.includes(':') ? cleanLine.split(':')[1].trim() : cleanLine;
+        // 1. ПАРСВАНЕ НА ХОТЕЛИ
+        if (upperLine.includes('ХОТЕЛ:')) {
+            const content = line.split(':')[1].trim();
             const name = content.includes('-') ? content.split('-')[1].trim() : content;
             const hotelUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest + " " + name)}&aid=701816`;
             hotelsHtml += `
-            <div class="bg-white p-4 rounded-2xl flex justify-between items-center border border-slate-100 shadow-sm">
-                <div><p class="text-[8px] font-black text-blue-600 uppercase mb-0.5 tracking-tighter">Препоръчан Хотел</p><p class="font-bold text-slate-800 text-[11px] leading-tight">${name}</p></div>
-                <a href="${hotelUrl}" target="_blank" class="bg-blue-600 text-white px-3 py-1.5 rounded-xl text-[9px] font-black uppercase shadow-md flex-shrink-0">Резервирай</a>
+            <div class="bg-white p-5 rounded-[2rem] flex justify-between items-center border border-slate-100 shadow-sm">
+                <div><p class="text-[9px] font-black text-blue-600 uppercase mb-1 tracking-tighter">Настаняване</p><p class="font-bold text-slate-800 text-xs">${name}</p></div>
+                <a href="${hotelUrl}" target="_blank" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase shadow-lg">Резервирай</a>
             </div>`;
         }
-        // 2. ДНИ
-        else if (upperLine.includes('ДЕН')) {
-            programHtml += `<div class="text-2xl font-black text-slate-900 border-b-4 border-blue-600/20 mt-10 mb-6 uppercase italic pb-1">${cleanLine}</div>`;
+        // 2. ПАРСВАНЕ НА ДНИ
+        else if (upperLine.includes('ДЕН:')) {
+            programHtml += `<div class="text-3xl font-black text-slate-900 border-b-8 border-blue-600/20 mt-16 mb-8 uppercase italic pb-2">${line.trim()}</div>`;
         }
-        // 3. ПОДОБРЕНО РАЗПОЗНАВАНЕ НА КАРТИ (Закуски, Обяди, Вечери, Обекти)
-        else if ((/[\u{1F300}-\u{1F9FF}]/u.test(cleanLine) || upperLine.includes('ЗАКУСКА') || upperLine.includes('ОБЯД') || upperLine.includes('ВЕЧЕРЯ')) && cleanLine.includes(':')) {
-            const parts = cleanLine.split(':');
-            const title = parts[0].trim();
-            const desc = parts[1] ? parts[1].trim() : "";
-            const cleanTitle = title.replace(/[\u{1F300}-\u{1F9FF}]/u, '').trim();
-            
-            // КОРЕКТЕН ТРАВЕЛПЕЙАУТС ЛИНК
+        // 3. ПАРСВАНЕ НА ВСИЧКИ КАРТИ (Чрез емоджи)
+        else if (/[\u{1F300}-\u{1F9FF}]/u.test(line) && line.includes(':')) {
+            const [titlePart, descPart] = line.split(':');
+            const cleanTitle = titlePart.replace(/[\u{1F300}-\u{1F9FF}]/u, '').trim();
             const tpUrl = `https://tp.media/r?marker=701816&trs=1&p=3959&u=https%3A%2F%2Fwww.wayaway.io%2Fsearch%3Fquery%3D${encodeURIComponent(dest + " " + cleanTitle)}`;
             
             programHtml += `
-            <div class="bg-white p-5 rounded-[2.5rem] shadow-md border border-slate-50 mb-4 flex justify-between items-center group transition">
-                <div class="flex flex-col pr-4">
-                    <b class="text-slate-900 font-extrabold text-base block mb-0.5 tracking-tight">${title}</b>
-                    <p class="text-slate-500 text-[11px] leading-relaxed line-clamp-3">${desc}</p>
+            <div class="bg-white p-8 rounded-[3.5rem] shadow-xl border border-slate-50 mb-6 flex justify-between items-center group transition hover:border-blue-200">
+                <div class="flex gap-6 items-start">
+                    <div class="flex flex-col">
+                        <b class="text-slate-900 font-extrabold text-xl block mb-1 tracking-tight">${titlePart.trim()}</b>
+                        <p class="text-slate-500 text-sm leading-relaxed max-w-xl">${descPart ? descPart.trim() : ""}</p>
+                    </div>
                 </div>
-                <a href="${tpUrl}" target="_blank" class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center flex-shrink-0 shadow-lg group-hover:bg-blue-600 transition">
-                    <i class="fas fa-external-link-alt text-sm"></i>
+                <a href="${tpUrl}" target="_blank" class="w-14 h-14 bg-slate-900 text-white rounded-full flex items-center justify-center flex-shrink-0 shadow-lg group-hover:bg-blue-600 transition">
+                    <i class="fas fa-external-link-alt text-xl"></i>
                 </a>
             </div>`;
         }
@@ -128,18 +129,18 @@ function renderUI(dest, md) {
 
     res.innerHTML = `
         <div id="pdfArea" class="max-w-5xl mx-auto pb-24 bg-slate-50/30 p-4 md:p-8 rounded-[4rem]">
-            <div class="bg-slate-900 p-8 rounded-[2.5rem] text-white mb-10 flex justify-between items-center shadow-xl border-b-[8px] border-blue-600">
-                <div><h2 class="text-3xl font-black italic uppercase tracking-tighter">${dest}</h2><p class="text-[9px] opacity-50 tracking-[0.3em] font-light">PREMIUM GUIDE BY ITINERFLAI</p></div>
-                <div class="flex gap-2">
-                    <button onclick="saveToCloud('${dest}')" class="bg-emerald-500 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase shadow-lg">Запази</button>
-                    <button onclick="saveToPDF('${dest}')" class="bg-blue-600 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase shadow-lg">PDF</button>
+            <div class="bg-slate-900 p-12 rounded-[3.5rem] text-white mb-12 flex justify-between items-center shadow-2xl border-b-[12px] border-blue-600">
+                <div><h2 class="text-5xl font-black italic uppercase tracking-tighter">${dest}</h2><p class="text-xs opacity-50 tracking-[0.4em] mt-2 font-light">PREMIUM GUIDE BY ITINERFLAI</p></div>
+                <div class="flex gap-3">
+                    <button onclick="saveToCloud('${dest}')" class="bg-emerald-500 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase shadow-xl hover:scale-105 transition">Запази</button>
+                    <button onclick="saveToPDF('${dest}')" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase shadow-xl hover:scale-105 transition">PDF</button>
                 </div>
             </div>
-            <div class="mb-10 px-2">
-                <h4 class="text-[10px] font-black text-slate-400 mb-4 uppercase tracking-[0.2em] italic border-l-4 border-blue-500 pl-3">ПРЕПОРЪЧАНО НАСТАНЯВАНЕ</h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">${hotelsHtml || "<p class='text-xs text-slate-400'>Генериране на хотели...</p>"}</div>
+            <div class="mb-16 px-4">
+                <h4 class="text-sm font-black text-slate-400 mb-6 uppercase tracking-[0.3em] italic underline decoration-blue-500 decoration-4">ПРЕПОРЪЧАНО НАСТАНЯВАНЕ</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">${hotelsHtml || "<p class='text-slate-400'>Търсене на хотели...</p>"}</div>
             </div>
-            <div class="px-2">${programHtml}</div>
+            <div class="px-4">${programHtml}</div>
         </div>`;
     res.classList.remove('hidden');
     res.scrollIntoView({ behavior: 'smooth' });
