@@ -54,15 +54,16 @@ async function generatePlan(e) {
 
     const prompt = `Направи елитен план за ${dest} за ${days} дни на БЪЛГАРСКИ. БЕЗ СИМВОЛИ # ИЛИ *.
     1. ХОТЕЛИ: Дай точно 4 реда: "ХОТЕЛ: [Име]".
-    2. ПРОГРАМА: За всеки ден изброй всяка активност на НОВ РЕД (за да има всяка собствен линк):
-    - ☕ [Име на място за закуска] : [Описание]
-    - 🏛️ [Име на забележителност 1] : [Описание]
-    - 🏛️ [Име на забележителност 2] : [Описание]
-    - 🏛️ [Име на забележителност 3] : [Описание]
-    - 🍴 [Име на ресторант за обяд] : [Описание]
-    - 📸 [Име на забележителност 4] : [Описание]
-    - 📸 [Име на забележителност 5] : [Описание]
-    - 🌙 [Име на ресторант за вечеря] : [Описание]`;
+    2. ПРОГРАМА: За всеки ден изброй всяко място на ОТДЕЛЕН ред. ЗАБРАНЕНО Е групирането.
+    Примерна структура за всеки ден:
+    ДЕН [Номер]
+    ☕ [Заведение за закуска] : [Описание]
+    🏛️ [Обект 1] : [Описание]
+    🏛️ [Обект 2] : [Описание]
+    🍴 [Ресторант за обяд] : [Описание]
+    📸 [Обект 3] : [Описание]
+    📸 [Обект 4] : [Описание]
+    🌙 [Ресторант за вечеря] : [Описание]`;
 
     try {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -70,7 +71,7 @@ async function generatePlan(e) {
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${O_KEY}` },
             body: JSON.stringify({
                 model: "gpt-4o",
-                messages: [{role: "system", content: "Ти си премиум гид. Всяка забележителност и ресторант трябва да е на отделен ред със собствено емоджи в началото."}, {role: "user", content: prompt}]
+                messages: [{role: "system", content: "Ти си премиум гид. НИКОГА не групирай обекти на един ред. Всеки обект = нов ред с емоджи."}, {role: "user", content: prompt}]
             })
         });
         const data = await response.json();
@@ -91,8 +92,8 @@ function renderUI(dest, md) {
         const cleanLine = line.trim();
         const upperLine = cleanLine.toUpperCase();
         
-        if (upperLine.startsWith('ХОТЕЛ:') && hotelCount < 4) {
-            const name = cleanLine.split(':')[1].trim();
+        if (upperLine.startsWith('ХОТЕЛ') && hotelCount < 4) {
+            const name = cleanLine.includes(':') ? cleanLine.split(':')[1].trim() : cleanLine;
             const hotelUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest + " " + name)}&aid=701816`;
             hotelsHtml += `
             <div class="bg-white p-5 rounded-3xl flex justify-between items-center border border-slate-100 shadow-sm">
@@ -101,23 +102,23 @@ function renderUI(dest, md) {
             </div>`;
             hotelCount++;
         }
-        else if (upperLine.includes('ДЕН:')) {
+        else if (upperLine.includes('ДЕН')) {
             programHtml += `<div class="text-2xl font-black text-slate-900 border-b-4 border-blue-600/20 mt-10 mb-6 uppercase italic pb-1">${cleanLine}</div>`;
         }
         else if (/[\u{1F300}-\u{1F9FF}]/u.test(cleanLine)) {
-            const separator = cleanLine.includes(':') ? ':' : '-';
-            const parts = cleanLine.split(separator);
+            const parts = cleanLine.split(/[:|-]/);
             const title = parts[0].trim();
-            const desc = parts.slice(1).join(separator).trim();
+            const desc = parts.slice(1).join(' ').trim();
             const cleanTitle = title.replace(/[\u{1F300}-\u{1F9FF}]/u, '').trim();
             
-            const tpUrl = `https://tp.media/r?marker=701816&trs=1&p=3959&u=https%3A%2F%2Fwww.wayaway.io%2Fsearch%3Fquery%3D${encodeURIComponent(dest + " " + cleanTitle)}`;
+            // Директен WayAway линк с твоя маркер 701816
+            const tpUrl = `https://wayaway.tp.st/search?marker=701816&query=${encodeURIComponent(dest + " " + cleanTitle)}&subid=itinerflai`;
             
             programHtml += `
             <div class="bg-white p-6 rounded-[2.5rem] shadow-md border border-slate-50 mb-4 flex justify-between items-center group transition">
                 <div class="flex flex-col pr-4">
                     <b class="text-slate-900 font-extrabold text-base block mb-0.5 tracking-tight">${title}</b>
-                    <p class="text-slate-500 text-[11px] leading-relaxed line-clamp-3">${desc}</p>
+                    <p class="text-slate-500 text-[11px] leading-relaxed line-clamp-2">${desc}</p>
                 </div>
                 <a href="${tpUrl}" target="_blank" class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center flex-shrink-0 shadow-lg group-hover:bg-blue-600 transition">
                     <i class="fas fa-external-link-alt text-sm"></i>
