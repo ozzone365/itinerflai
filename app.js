@@ -10,18 +10,18 @@ async function init() {
             setupAuth();
             checkUser();
         }
-    } catch (e) { console.error("Грешка:", e); }
+    } catch (e) { console.error("Грешка при инит:", e); }
 }
 init();
 
-// ВЪЗСТАНОВЕНА ФУНКЦИЯ ВХОД
 function setupAuth() {
     const btn = document.getElementById('realSubmitBtn');
     if (!btn) return;
     btn.onclick = async () => {
         const email = document.getElementById('authEmail').value;
         const pass = document.getElementById('authPassword').value;
-        const isReg = document.getElementById('authTitle').innerText === 'Регистрация';
+        const title = document.getElementById('authTitle').innerText;
+        const isReg = title.includes('Регистрация');
         try {
             const { error } = isReg 
                 ? await sbClient.auth.signUp({ email, password: pass })
@@ -29,7 +29,7 @@ function setupAuth() {
             if (error) throw error;
             document.getElementById('authModal').classList.add('hidden');
             checkUser();
-        } catch (err) { alert("Грешка при вход: " + err.message); }
+        } catch (err) { alert("Грешка: " + err.message); }
     };
 }
 
@@ -40,7 +40,7 @@ async function checkUser() {
         status.innerHTML = `
             <div class="flex items-center gap-3 bg-slate-800 p-2 px-4 rounded-xl border border-slate-700">
                 <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">${user.email}</span>
-                <button onclick="sbClient.auth.signOut().then(() => location.reload())" class="text-white hover:text-red-500 transition"><i class="fas fa-sign-out-alt"></i></button>
+                <button onclick="sbClient.auth.signOut().then(() => location.reload())" class="text-white hover:text-red-500 transition ml-2"><i class="fas fa-sign-out-alt"></i></button>
             </div>`;
     }
 }
@@ -56,9 +56,15 @@ async function generatePlan(e) {
 
     const prompt = `Направи елитен план за ${dest} за ${days} дни на БЪЛГАРСКИ. 
     БЕЗ СИМВОЛИ # ИЛИ *. 
-    1. ХОТЕЛИ: Дай точно 4 различни хотела (Лукс, Бутик, Бюджет, Апартамент). Формат: "ХОТЕЛ: [Тип] - [Име]"
-    2. ПРОГРАМА: За всяко хранене или забележителност ползвай формат: "[Икона] [Заглавие]: [Описание]"
-    ЗАДЪЛЖИТЕЛНО включвай за всеки ден: ☕ ЗАКУСКА, 🏛️ ЗАБЕЛЕЖИТЕЛНОСТИ (минимум 3 обекта), 🍴 ОБЯД, 📸 ЗАБЕЛЕЖИТЕЛНОСТИ (още 3 обекта), 🌙 ВЕЧЕРЯ.`;
+    СТРУКТУРА:
+    1. Дай 4 хотела: ХОТЕЛ: [Тип] - [Име]
+    2. Програма за всеки ден (Задължително ползвай емоджи):
+    ДЕН: [Номер]
+    ☕ ЗАКУСКА: [Място] | [Описание]
+    🏛️ ЗАБЕЛЕЖИТЕЛНОСТИ: [Обект 1, 2, 3] | [Описание]
+    🍴 ОБЯД: [Ресторант] | [Описание]
+    📸 ЗАБЕЛЕЖИТЕЛНОСТИ: [Обект 4, 5, 6] | [Описание]
+    🌙 ВЕЧЕРЯ: [Ресторант] | [Описание]`;
 
     try {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -66,12 +72,12 @@ async function generatePlan(e) {
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${O_KEY}` },
             body: JSON.stringify({
                 model: "gpt-4o",
-                messages: [{role: "system", content: "Ти си професионален агент. Пиши чисто, без Маркдаун. Всеки ред от програмата да започва с емоджи."}, {role: "user", content: prompt}]
+                messages: [{role: "system", content: "Ти си премиум гид. Не ползвай Маркдаун. Всеки ред с активност ЗАДЪЛЖИТЕЛНО започва с емоджи и съдържа ':'."}, {role: "user", content: prompt}]
             })
         });
         const data = await response.json();
         renderUI(dest, data.choices[0].message.content);
-    } catch (err) { alert("Грешка при генериране!"); }
+    } catch (err) { alert("Грешка!"); }
     finally { document.getElementById('loader').classList.add('hidden'); }
 }
 
@@ -80,33 +86,34 @@ function renderUI(dest, md) {
     let hotelsHtml = "";
     let programHtml = "";
     
-    // Чистим текста от нежелани текстове и звездички
+    // Чистим всички гадни символи
     const lines = md.replace(/[*#]/g, '').split('\n').filter(l => l.trim() !== "");
 
     lines.forEach(line => {
-        // ПАРСВАНЕ НА ХОТЕЛИ
+        // ХОТЕЛИ
         if (line.toUpperCase().includes('ХОТЕЛ:')) {
-            const content = line.split(':')[1];
-            const [type, name] = content.split('-');
-            const hotelUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest + " " + (name || ""))}&aid=701816`;
+            const content = line.split(':')[1].trim();
+            const parts = content.split('-');
+            const name = parts[1] ? parts[1].trim() : parts[0].trim();
+            const hotelUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest + " " + name)}&aid=701816`;
             hotelsHtml += `
-            <div class="bg-white p-5 rounded-[2rem] flex justify-between items-center border border-slate-100 shadow-sm hover:shadow-md transition">
-                <div><p class="text-[9px] font-black text-blue-600 uppercase mb-1">${type || "Хотел"}</p><p class="font-bold text-slate-800 text-xs">${name || "Препоръчан"}</p></div>
+            <div class="bg-white p-5 rounded-[2rem] flex justify-between items-center border border-slate-100 shadow-sm">
+                <div><p class="text-[9px] font-black text-blue-600 uppercase mb-1">${parts[0].trim()}</p><p class="font-bold text-slate-800 text-xs">${name}</p></div>
                 <a href="${hotelUrl}" target="_blank" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase shadow-lg">Резервирай</a>
             </div>`;
         }
-        // ПАРСВАНЕ НА ДНИ
+        // ДНИ
         else if (line.toUpperCase().includes('ДЕН')) {
-            programHtml += `<div class="text-3xl font-black text-slate-900 border-b-8 border-blue-600/20 mt-16 mb-8 uppercase italic pb-2">${line}</div>`;
+            programHtml += `<div class="text-3xl font-black text-slate-900 border-b-8 border-blue-600/20 mt-16 mb-8 uppercase italic pb-2">${line.trim()}</div>`;
         }
-        // ПАРСВАНЕ НА ПРОГРАМА (Всичко с емоджи става карта)
+        // ВСИЧКИ АКТИВНОСТИ (Карти)
         else if (/[\u{1F300}-\u{1F9FF}]/u.test(line) && line.includes(':')) {
             const [titlePart, descPart] = line.split(':');
             const cleanTitle = titlePart.replace(/[\u{1F300}-\u{1F9FF}]/u, '').trim();
             const tpUrl = `https://tp.media/r?marker=701816&trs=1&p=3959&u=https%3A%2F%2Fwww.wayaway.io%2Fsearch%3Fquery%3D${encodeURIComponent(dest + " " + cleanTitle)}`;
             
             programHtml += `
-            <div class="bg-white p-8 rounded-[3.5rem] shadow-xl border border-slate-50 mb-6 flex justify-between items-center group transition hover:border-blue-200">
+            <div class="bg-white p-8 rounded-[3.5rem] shadow-xl border border-slate-50 mb-6 flex justify-between items-center group">
                 <div class="flex gap-6 items-start">
                     <div class="flex flex-col">
                         <b class="text-slate-900 font-extrabold text-xl block mb-1 tracking-tight">${titlePart.trim()}</b>
@@ -129,12 +136,10 @@ function renderUI(dest, md) {
                     <button onclick="saveToPDF('${dest}')" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase shadow-xl hover:scale-105 transition">PDF</button>
                 </div>
             </div>
-
             <div class="mb-16 px-4">
                 <h4 class="text-sm font-black text-slate-400 mb-6 uppercase tracking-[0.3em] italic underline decoration-blue-500 decoration-4">ПРЕПОРЪЧАНО НАСТАНЯВАНЕ</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">${hotelsHtml}</div>
             </div>
-
             <div class="px-4">${programHtml}</div>
         </div>`;
     
