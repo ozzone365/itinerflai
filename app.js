@@ -28,7 +28,7 @@ function setupAuth() {
             if (error) throw error;
             document.getElementById('authModal').classList.add('hidden');
             checkUser();
-        } catch (err) { alert("Грешка: " + err.message); }
+        } catch (err) { alert(err.message); }
     };
 }
 
@@ -55,15 +55,15 @@ async function generatePlan(e) {
     const prompt = `Направи елитен план за ${dest} за ${days} дни на БЪЛГАРСКИ. 
     БЕЗ СИМВОЛИ КАТО # ИЛИ *. 
     
-    СТРУКТУРА:
-    1. ХОТЕЛИ: Дай 4 хотела (Лукс, Бутик, Бюджет, Апартамент). Формат: "ХОТЕЛ: [Тип] - [Име]"
-    2. ПРОГРАМА ЗА ВСЕКИ ДЕН (ЗАДЪЛЖИТЕЛНО ВКЛЮЧВАЙ ЗАКУСКА):
+    ЗАДЪЛЖИТЕЛНА СТРУКТУРА:
+    1. Дай точно 4 хотела в началото във формат: ХОТЕЛ: [Тип] - [Име]
+    2. За всеки ден дай точно това:
     ДЕН: [Номер]
     ☕ ЗАКУСКА: [Място] | [Описание]
-    🏛️ ЗАБЕЛЕЖИТЕЛНОСТИ: [3 обекта] | [Описание на маршрута]
-    🍴 ОБЯД: [Ресторант] | [Описание]
-    📸 ЗАБЕЛЕЖИТЕЛНОСТИ: [3 нови обекта] | [Описание]
-    🌙 ВЕЧЕРЯ: [Ресторант] | [Атмосфера]`;
+    🏛️ ЗАБЕЛЕЖИТЕЛНОСТИ: [3 обекта] | [Описание]
+    🍴 ОБЯД: [Място] | [Описание]
+    📸 ЗАБЕЛЕЖИТЕЛНОСТИ: [3 обекта] | [Описание]
+    🌙 ВЕЧЕРЯ: [Място] | [Описание]`;
 
     try {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -71,12 +71,12 @@ async function generatePlan(e) {
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${O_KEY}` },
             body: JSON.stringify({
                 model: "gpt-4o",
-                messages: [{role: "system", content: "Ти си елитен травъл агент. Пиши чисто, без Markdown. Всяка точка започва с емоджи и има ':'."}, {role: "user", content: prompt}]
+                messages: [{role: "system", content: "Ти си професионален гид. Пиши чисто, без Markdown. Използвай емоджита за всяка точка от програмата."}, {role: "user", content: prompt}]
             })
         });
         const data = await response.json();
         renderUI(dest, data.choices[0].message.content);
-    } catch (err) { alert("AI Грешка!"); }
+    } catch (err) { alert("Грешка!"); }
     finally { document.getElementById('loader').classList.add('hidden'); }
 }
 
@@ -89,30 +89,25 @@ function renderUI(dest, md) {
     const lines = cleanMd.split('\n').filter(l => l.trim() !== "");
 
     lines.forEach(line => {
-        // Парсване на хотели
         if (line.toUpperCase().includes('ХОТЕЛ:')) {
             const content = line.split(':')[1];
             const parts = content.split('-');
-            const type = parts[0] ? parts[0].trim() : "Хотел";
-            const name = parts[1] ? parts[1].trim() : "Препоръчан";
+            const name = parts[1] ? parts[1].trim() : parts[0].trim();
             const hotelUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest + " " + name)}&aid=701816`;
             hotelsHtml += `
             <div class="bg-white p-4 rounded-[2rem] flex justify-between items-center border border-slate-100 shadow-sm hover:shadow-md transition">
-                <div><p class="text-[9px] font-black text-blue-600 uppercase mb-0.5">${type}</p><p class="font-bold text-slate-800 text-[11px]">${name}</p></div>
+                <div><p class="text-[9px] font-black text-blue-600 uppercase mb-0.5">${parts[0] ? parts[0].trim() : "Хотел"}</p><p class="font-bold text-slate-800 text-[11px]">${name}</p></div>
                 <a href="${hotelUrl}" target="_blank" rel="noopener noreferrer" class="bg-blue-600 text-white px-3 py-1.5 rounded-xl text-[9px] font-black uppercase shadow-md hover:bg-slate-900 transition">Резервирай</a>
             </div>`;
         }
-        // Парсване на Дни
         else if (line.toUpperCase().includes('ДЕН:')) {
             programHtml += `<div class="text-2xl font-black text-slate-900 border-b-4 border-blue-600/20 mt-12 mb-6 uppercase italic pb-1">${line.trim()}</div>`;
         }
-        // Парсване на програма (Закуска, Обекти и т.н.)
         else if (/[\u{1F300}-\u{1F9FF}]/u.test(line) && line.includes(':')) {
             const [titlePart, descPart] = line.split(':');
             const placeName = titlePart.replace(/[\u{1F300}-\u{1F9FF}]/u, '').trim();
-            // ФИКСИРАН ЛИНК ЗА ГУГЪЛ МАПС
+            // ФИКСИРАН ЛИНК
             const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest + " " + placeName)}`;
-            
             programHtml += `
             <div class="bg-white p-6 rounded-[2.5rem] shadow-lg border border-slate-50 mb-4 flex justify-between items-center group transition hover:border-blue-200">
                 <div class="flex gap-4 items-start">
@@ -139,9 +134,9 @@ function renderUI(dest, md) {
             </div>
             <div class="mb-12 px-4">
                 <h4 class="text-[11px] font-black text-slate-400 mb-4 uppercase tracking-[0.2em] italic border-l-4 border-blue-500 pl-3">ПРЕПОРЪЧАНО НАСТАНЯВАНЕ</h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${hotelsHtml || "<p class='text-xs italic'>Генериране на хотели...</p>"}</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${hotelsHtml}</div>
             </div>
-            <div class="px-4">${programHtml || "<p class='text-xs italic'>Генериране на програма...</p>"}</div>
+            <div class="px-4">${programHtml}</div>
         </div>`;
     
     res.classList.remove('hidden');
@@ -155,10 +150,10 @@ window.saveToPDF = function(n) {
 
 async function saveToCloud(dest) {
     const { data: { user } } = await sbClient.auth.getUser();
-    if (!user) return alert("Моля, влезте в профила си!");
+    if (!user) return alert("Влезте в профила!");
     const content = document.getElementById('pdfArea').innerHTML;
     await sbClient.from('itineraries').insert([{ user_id: user.id, destination: dest, content }]);
-    alert("Програмата е запазена успешно! ✨");
+    alert("Запазено! ✨");
 }
 
 document.addEventListener('DOMContentLoaded', () => {
