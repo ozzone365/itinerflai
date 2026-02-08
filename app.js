@@ -1,7 +1,23 @@
 // Конфигурация
-const S_URL = window.location.hostname === 'localhost' ? "" : "PROCESSED_BY_VERCEL";
-const S_KEY = window.location.hostname === 'localhost' ? "" : "PROCESSED_BY_VERCEL";
-const O_KEY = window.location.hostname === 'localhost' ? "" : "PROCESSED_BY_VERCEL"; 
+let S_URL, S_KEY, O_KEY;
+
+async function loadConfig() {
+  try {
+    const response = await fetch('/api/config');
+    const config = await response.json();
+    S_URL = config.supabaseUrl;
+    S_KEY = config.supabaseKey;
+    O_KEY = config.openaiKey;
+    
+    console.log("Системата е готова!");
+    // Тук можеш да извикаш функцията, която инициализира Supabase
+    initApp(); 
+  } catch (err) {
+    console.error("Грешка при зареждане на конфигурацията:", err);
+  }
+}
+
+loadConfig(); 
 
 const supabase = window.supabase.createClient(S_URL, S_KEY);
 
@@ -143,3 +159,4 @@ function renderUI(dest, content) {
     res.classList.remove('hidden');
 
 }
+
