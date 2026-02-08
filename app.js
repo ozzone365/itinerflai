@@ -14,35 +14,6 @@ async function init() {
 }
 init();
 
-function setupAuth() {
-    const btn = document.getElementById('realSubmitBtn');
-    if (!btn) return;
-    btn.onclick = async () => {
-        const email = document.getElementById('authEmail').value;
-        const pass = document.getElementById('authPassword').value;
-        const isReg = document.getElementById('authTitle').innerText === 'Регистрация';
-        try {
-            const { error } = isReg 
-                ? await sbClient.auth.signUp({ email, password: pass })
-                : await sbClient.auth.signInWithPassword({ email, password: pass });
-            if (error) throw error;
-            document.getElementById('authModal').classList.add('hidden');
-            checkUser();
-        } catch (err) { alert(err.message); }
-    };
-}
-
-async function checkUser() {
-    const { data: { user } } = await sbClient.auth.getUser();
-    if (user) {
-        document.getElementById('userStatus').innerHTML = `
-            <div class="flex items-center gap-3 bg-slate-800 p-2 px-4 rounded-xl border border-slate-700 shadow-lg">
-                <span class="text-[10px] font-black text-blue-400 uppercase tracking-widest">${user.email}</span>
-                <button onclick="sbClient.auth.signOut().then(() => location.reload())" class="text-white hover:text-red-500 transition px-2"><i class="fas fa-sign-out-alt"></i></button>
-            </div>`;
-    }
-}
-
 async function generatePlan(e) {
     e.preventDefault();
     const dest = document.getElementById('destination').value;
@@ -52,11 +23,9 @@ async function generatePlan(e) {
     document.getElementById('loader').classList.remove('hidden');
     document.getElementById('result').classList.add('hidden');
 
-    const prompt = `Направи богат туристически план за ${dest} за ${days} дни на БЪЛГАРСКИ. 
-    1. Дай 4 хотела (Лукс, Бутик, Бюджет, Апартамент) във формат: HOTEL: [Тип] | [Име]
-    2. Програма по дни: За всяка част ползвай точно този формат:
-    ДЕН: [Номер]
-    ITEM: [Икона] | [Заглавие] | [Описание 2 изречения]`;
+    const prompt = `Направи елитен план за ${dest} за ${days} дни на БЪЛГАРСКИ. 
+    1. ХОТЕЛИ: Дай 4 хотела (Лукс, Бутик, Бюджет, Апартамент). Формат: "ХОТЕЛ: [Тип] - [Име]"
+    2. ПРОГРАМА: За всяко хранене или забележителност ползвай формат: "[Икона] [Заглавие]: [Описание 2 изречения]"`;
 
     try {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -64,12 +33,12 @@ async function generatePlan(e) {
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${O_KEY}` },
             body: JSON.stringify({
                 model: "gpt-4o",
-                messages: [{role: "system", content: "Ти си професионален гид. Пиши на Български."}, {role: "user", content: prompt}]
+                messages: [{role: "system", content: "Ти си професионален травъл агент. Пиши само на български."}, {role: "user", content: prompt}]
             })
         });
         const data = await response.json();
         renderUI(dest, data.choices[0].message.content);
-    } catch (err) { alert("Грешка!"); }
+    } catch (err) { alert("Грешка при генериране!"); }
     finally { document.getElementById('loader').classList.add('hidden'); }
 }
 
@@ -77,46 +46,40 @@ function renderUI(dest, md) {
     const res = document.getElementById('result');
     let hotelsHtml = "";
     let programHtml = "";
-    const lines = md.split('\n');
+    const lines = md.split('\n').filter(l => l.trim() !== "");
 
     lines.forEach(line => {
-        // ХОТЕЛИ
-        if (line.includes('HOTEL:')) {
-            const parts = line.replace('HOTEL:', '').split('|');
-            if (parts.length >= 2) {
-                const hotelName = parts[1].trim();
-                const hotelUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest + " " + hotelName)}&aid=701816`;
-                hotelsHtml += `
-                <div class="bg-white p-5 rounded-[2rem] flex justify-between items-center border border-slate-100 shadow-sm hover:shadow-md transition">
-                    <div><p class="text-[9px] font-black text-blue-600 uppercase mb-1">${parts[0].trim()}</p><p class="font-bold text-slate-800 text-xs">${hotelName}</p></div>
-                    <a href="${hotelUrl}" target="_blank" rel="noopener noreferrer" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase shadow-lg">Резервирай</a>
-                </div>`;
-            }
+        // 1. ПАРСВАНЕ НА ХОТЕЛИ
+        if (line.toUpperCase().includes('ХОТЕЛ:')) {
+            const content = line.split(':')[1];
+            const [type, name] = content.split('-');
+            const hotelUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest + " " + (name || ""))}&aid=701816`;
+            hotelsHtml += `
+            <div class="bg-white p-5 rounded-[2rem] flex justify-between items-center border border-slate-100 shadow-sm hover:shadow-md transition">
+                <div><p class="text-[9px] font-black text-blue-600 uppercase mb-1">${type || "Хотел"}</p><p class="font-bold text-slate-800 text-xs">${name || "Препоръчан"}</p></div>
+                <a href="${hotelUrl}" target="_blank" rel="noopener noreferrer" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase shadow-lg">Резервирай</a>
+            </div>`;
         }
-        // ДНИ
-        else if (line.includes('ДЕН:')) {
-            programHtml += `<div class="text-3xl font-black text-slate-900 border-b-8 border-blue-600/20 mt-16 mb-8 uppercase italic pb-2">Ден ${line.split(':')[1].trim()}</div>`;
+        // 2. ПАРСВАНЕ НА ЗАГЛАВИЯ НА ДНИ
+        else if (line.toUpperCase().includes('ДЕН')) {
+            programHtml += `<div class="text-3xl font-black text-slate-900 border-b-8 border-blue-600/20 mt-16 mb-8 uppercase italic pb-2">${line}</div>`;
         }
-        // ПРОГРАМА (ITEM)
-        else if (line.includes('ITEM:')) {
-            const parts = line.replace('ITEM:', '').split('|');
-            if (parts.length >= 3) {
-                const title = parts[1].trim();
-                const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest + " " + title)}`;
-                programHtml += `
-                <div class="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 mb-6 flex justify-between items-center group transition hover:border-blue-200">
-                    <div class="flex gap-6 items-start">
-                        <span class="text-4xl mt-1">${parts[0].trim()}</span>
-                        <div>
-                            <b class="text-slate-900 font-extrabold text-xl block mb-1 tracking-tight">${title}</b>
-                            <p class="text-slate-500 text-sm leading-relaxed max-w-xl">${parts[2].trim()}</p>
-                        </div>
+        // 3. ПАРСВАНЕ НА ПРОГРАМА (по икона/емоджи)
+        else if (/[\u{1F300}-\u{1F9FF}]/u.test(line) && line.includes(':')) {
+            const [titlePart, descPart] = line.split(':');
+            const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest + " " + titlePart)}`;
+            programHtml += `
+            <div class="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50 mb-6 flex justify-between items-center group transition hover:border-blue-200">
+                <div class="flex gap-6 items-start">
+                    <div class="flex flex-col">
+                        <b class="text-slate-900 font-extrabold text-xl block mb-1 tracking-tight">${titlePart.trim()}</b>
+                        <p class="text-slate-500 text-sm leading-relaxed max-w-xl">${descPart ? descPart.trim() : ""}</p>
                     </div>
-                    <a href="${mapUrl}" target="_blank" rel="noopener noreferrer" class="w-14 h-14 bg-slate-900 text-white rounded-full flex items-center justify-center flex-shrink-0 shadow-lg group-hover:bg-blue-600 transition">
-                        <i class="fas fa-map-marker-alt text-xl"></i>
-                    </a>
-                </div>`;
-            }
+                </div>
+                <a href="${mapUrl}" target="_blank" rel="noopener noreferrer" class="w-14 h-14 bg-slate-900 text-white rounded-full flex items-center justify-center flex-shrink-0 shadow-lg group-hover:bg-blue-600 transition">
+                    <i class="fas fa-map-marker-alt text-xl"></i>
+                </a>
+            </div>`;
         }
     });
 
@@ -131,17 +94,18 @@ function renderUI(dest, md) {
             </div>
 
             <div class="mb-16 px-4">
-                <h4 class="text-sm font-black text-slate-400 mb-6 uppercase tracking-[0.3em] italic underline decoration-blue-500 decoration-4">ПРЕПОРЪЧАНО НАСТАНЯВАНЕ</h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">${hotelsHtml}</div>
+                <h4 class="text-sm font-black text-slate-400 mb-6 uppercase tracking-[0.3em] italic underline decoration-blue-500 decoration-4"> ПРЕПОРЪЧАНО НАСТАНЯВАНЕ</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">${hotelsHtml || "<p class='text-slate-400'>Търсим най-добрите хотели...</p>"}</div>
             </div>
 
-            <div class="px-4">${programHtml}</div>
+            <div class="px-4">${programHtml || "<p class='text-slate-400 italic'>Генериране на подробен маршрут...</p>"}</div>
         </div>`;
     
     res.classList.remove('hidden');
     res.scrollIntoView({ behavior: 'smooth' });
 }
 
+// Помощни функции (PDF и Auth остават същите)
 window.saveToPDF = function(n) {
     const el = document.getElementById('pdfArea');
     html2pdf().set({ margin: 10, filename: n+'.pdf', html2canvas: { scale: 3 }, jsPDF: { format: 'a4' } }).from(el).save();
@@ -152,7 +116,7 @@ async function saveToCloud(dest) {
     if (!user) return alert("Влезте в профила!");
     const content = document.getElementById('pdfArea').innerHTML;
     await sbClient.from('itineraries').insert([{ user_id: user.id, destination: dest, content }]);
-    alert("Програмата е запазена! ✨");
+    alert("Запазено! ✨");
 }
 
 document.addEventListener('DOMContentLoaded', () => {
