@@ -54,9 +54,8 @@ async function generatePlan(e) {
 
     const prompt = `Направи елитен план за ${dest} за ${days} дни на БЪЛГАРСКИ. 
     БЕЗ СИМВОЛИ # ИЛИ *. 
-    СТРИКТНИ ПРАВИЛА:
-    1. Започни с 4 реда: ХОТЕЛ: [Тип] - [Име]
-    2. За всеки ден ЗАДЪЛЖИТЕЛНО дай:
+    1. Дай 4 хотела: ХОТЕЛ: [Тип] - [Име]
+    2. За всеки ден ЗАДЪЛЖИТЕЛНО: 
     - ☕ ЗАКУСКА: [Име] | [Описание]
     - 🏛️ ЗАБЕЛЕЖИТЕЛНОСТИ: [Минимум 3 обекта] | [Описание]
     - 🍴 ОБЯД: [Ресторант] | [Описание]
@@ -69,7 +68,7 @@ async function generatePlan(e) {
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${O_KEY}` },
             body: JSON.stringify({
                 model: "gpt-4o",
-                messages: [{role: "system", content: "Ти си премиум гид. Пиши чисто. Всяка точка от програмата да е на нов ред, да започва с емоджи и да има ':'."}, {role: "user", content: prompt}]
+                messages: [{role: "system", content: "Ти си професионален гид. Пиши на нови редове. Всяка активност да започва с емоджи и да има ':'."}, {role: "user", content: prompt}]
             })
         });
         const data = await response.json();
@@ -86,31 +85,32 @@ function renderUI(dest, md) {
     const lines = md.replace(/[*#]/g, '').split('\n').filter(l => l.trim() !== "");
 
     lines.forEach(line => {
-        const upperLine = line.toUpperCase();
+        const cleanLine = line.trim();
+        const upperLine = cleanLine.toUpperCase();
         
-        // ХОТЕЛИ
-        if (upperLine.includes('ХОТЕЛ:')) {
-            const content = line.split(':')[1].trim();
+        // 1. ПОДОБРЕНО РАЗПОЗНАВАНЕ НА ХОТЕЛИ
+        if (upperLine.includes('ХОТЕЛ')) {
+            let content = cleanLine.includes(':') ? cleanLine.split(':')[1].trim() : cleanLine;
             const name = content.includes('-') ? content.split('-')[1].trim() : content;
             const hotelUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest + " " + name)}&aid=701816`;
             hotelsHtml += `
             <div class="bg-white p-4 rounded-2xl flex justify-between items-center border border-slate-100 shadow-sm">
-                <div><p class="text-[8px] font-black text-blue-600 uppercase mb-0.5">Хотел</p><p class="font-bold text-slate-800 text-[11px] leading-tight">${name}</p></div>
+                <div><p class="text-[8px] font-black text-blue-600 uppercase mb-0.5 tracking-tighter">Препоръчан Хотел</p><p class="font-bold text-slate-800 text-[11px] leading-tight">${name}</p></div>
                 <a href="${hotelUrl}" target="_blank" class="bg-blue-600 text-white px-3 py-1.5 rounded-xl text-[9px] font-black uppercase shadow-md flex-shrink-0">Резервирай</a>
             </div>`;
         }
-        // ДНИ
-        else if (upperLine.includes('ДЕН:')) {
-            programHtml += `<div class="text-2xl font-black text-slate-900 border-b-4 border-blue-600/20 mt-10 mb-6 uppercase italic pb-1">${line.trim()}</div>`;
+        // 2. ДНИ
+        else if (upperLine.includes('ДЕН')) {
+            programHtml += `<div class="text-2xl font-black text-slate-900 border-b-4 border-blue-600/20 mt-10 mb-6 uppercase italic pb-1">${cleanLine}</div>`;
         }
-        // ВСИЧКИ КАРТИ (Закуска, Обекти, Обяд и т.н.)
-        else if (/[\u{1F300}-\u{1F9FF}]/u.test(line) && line.includes(':')) {
-            const parts = line.split(':');
+        // 3. ПОДОБРЕНО РАЗПОЗНАВАНЕ НА КАРТИ (Закуски, Обяди, Вечери, Обекти)
+        else if ((/[\u{1F300}-\u{1F9FF}]/u.test(cleanLine) || upperLine.includes('ЗАКУСКА') || upperLine.includes('ОБЯД') || upperLine.includes('ВЕЧЕРЯ')) && cleanLine.includes(':')) {
+            const parts = cleanLine.split(':');
             const title = parts[0].trim();
             const desc = parts[1] ? parts[1].trim() : "";
             const cleanTitle = title.replace(/[\u{1F300}-\u{1F9FF}]/u, '').trim();
             
-            // КОРЕКТЕН TRAVELPAYOUTS ЛИНК
+            // КОРЕКТЕН ТРАВЕЛПЕЙАУТС ЛИНК
             const tpUrl = `https://tp.media/r?marker=701816&trs=1&p=3959&u=https%3A%2F%2Fwww.wayaway.io%2Fsearch%3Fquery%3D${encodeURIComponent(dest + " " + cleanTitle)}`;
             
             programHtml += `
@@ -137,7 +137,7 @@ function renderUI(dest, md) {
             </div>
             <div class="mb-10 px-2">
                 <h4 class="text-[10px] font-black text-slate-400 mb-4 uppercase tracking-[0.2em] italic border-l-4 border-blue-500 pl-3">ПРЕПОРЪЧАНО НАСТАНЯВАНЕ</h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">${hotelsHtml}</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">${hotelsHtml || "<p class='text-xs text-slate-400'>Генериране на хотели...</p>"}</div>
             </div>
             <div class="px-2">${programHtml}</div>
         </div>`;
@@ -152,7 +152,7 @@ window.saveToPDF = function(n) {
 
 async function saveToCloud(dest) {
     const { data: { user } } = await sbClient.auth.getUser();
-    if (!user) return alert("Моля, влезте в профила!");
+    if (!user) return alert("Влезте в профила!");
     const content = document.getElementById('pdfArea').innerHTML;
     await sbClient.from('itineraries').insert([{ user_id: user.id, destination: dest, content }]);
     alert("Запазено! ✨");
