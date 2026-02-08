@@ -10,7 +10,7 @@ async function init() {
             setupAuth();
             checkUser();
         }
-    } catch (e) { console.error("Грешка при инит:", e); }
+    } catch (e) { console.error("Грешка:", e); }
 }
 init();
 
@@ -20,8 +20,7 @@ function setupAuth() {
     btn.onclick = async () => {
         const email = document.getElementById('authEmail').value;
         const pass = document.getElementById('authPassword').value;
-        const title = document.getElementById('authTitle').innerText;
-        const isReg = title.includes('Регистрация');
+        const isReg = document.getElementById('authTitle').innerText.includes('Регистрация');
         try {
             const { error } = isReg 
                 ? await sbClient.auth.signUp({ email, password: pass })
@@ -29,18 +28,17 @@ function setupAuth() {
             if (error) throw error;
             document.getElementById('authModal').classList.add('hidden');
             checkUser();
-        } catch (err) { alert("Грешка: " + err.message); }
+        } catch (err) { alert(err.message); }
     };
 }
 
 async function checkUser() {
     const { data: { user } } = await sbClient.auth.getUser();
-    const status = document.getElementById('userStatus');
-    if (user && status) {
-        status.innerHTML = `
+    if (user && document.getElementById('userStatus')) {
+        document.getElementById('userStatus').innerHTML = `
             <div class="flex items-center gap-3 bg-slate-800 p-2 px-4 rounded-xl border border-slate-700">
                 <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">${user.email}</span>
-                <button onclick="sbClient.auth.signOut().then(() => location.reload())" class="text-white hover:text-red-500 transition ml-2"><i class="fas fa-sign-out-alt"></i></button>
+                <button onclick="sbClient.auth.signOut().then(() => location.reload())" class="text-white hover:text-red-500 transition px-2"><i class="fas fa-sign-out-alt"></i></button>
             </div>`;
     }
 }
@@ -57,14 +55,13 @@ async function generatePlan(e) {
     const prompt = `Направи елитен план за ${dest} за ${days} дни на БЪЛГАРСКИ. 
     БЕЗ СИМВОЛИ # ИЛИ *. 
     СТРУКТУРА:
-    1. Дай 4 хотела: ХОТЕЛ: [Тип] - [Име]
-    2. Програма за всеки ден (Задължително ползвай емоджи):
+    ХОТЕЛ: [Тип] - [Име] (Дай точно 4 такива реда в началото)
     ДЕН: [Номер]
     ☕ ЗАКУСКА: [Място] | [Описание]
-    🏛️ ЗАБЕЛЕЖИТЕЛНОСТИ: [Обект 1, 2, 3] | [Описание]
-    🍴 ОБЯД: [Ресторант] | [Описание]
-    📸 ЗАБЕЛЕЖИТЕЛНОСТИ: [Обект 4, 5, 6] | [Описание]
-    🌙 ВЕЧЕРЯ: [Ресторант] | [Описание]`;
+    🏛️ ЗАБЕЛЕЖИТЕЛНОСТИ: [Обекти] | [Описание]
+    🍴 ОБЯД: [Място] | [Описание]
+    📸 ЗАБЕЛЕЖИТЕЛНОСТИ: [Обекти] | [Описание]
+    🌙 ВЕЧЕРЯ: [Място] | [Описание]`;
 
     try {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -72,7 +69,7 @@ async function generatePlan(e) {
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${O_KEY}` },
             body: JSON.stringify({
                 model: "gpt-4o",
-                messages: [{role: "system", content: "Ти си премиум гид. Не ползвай Маркдаун. Всеки ред с активност ЗАДЪЛЖИТЕЛНО започва с емоджи и съдържа ':'."}, {role: "user", content: prompt}]
+                messages: [{role: "system", content: "Ти си професионален гид. Не ползвай Маркдаун. Всеки ред започва с емоджи и има ':'."}, {role: "user", content: prompt}]
             })
         });
         const data = await response.json();
@@ -86,11 +83,9 @@ function renderUI(dest, md) {
     let hotelsHtml = "";
     let programHtml = "";
     
-    // Чистим всички гадни символи
     const lines = md.replace(/[*#]/g, '').split('\n').filter(l => l.trim() !== "");
 
     lines.forEach(line => {
-        // ХОТЕЛИ
         if (line.toUpperCase().includes('ХОТЕЛ:')) {
             const content = line.split(':')[1].trim();
             const parts = content.split('-');
@@ -98,22 +93,20 @@ function renderUI(dest, md) {
             const hotelUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest + " " + name)}&aid=701816`;
             hotelsHtml += `
             <div class="bg-white p-5 rounded-[2rem] flex justify-between items-center border border-slate-100 shadow-sm">
-                <div><p class="text-[9px] font-black text-blue-600 uppercase mb-1">${parts[0].trim()}</p><p class="font-bold text-slate-800 text-xs">${name}</p></div>
+                <div><p class="text-[9px] font-black text-blue-600 uppercase mb-1">${parts[0] || "Хотел"}</p><p class="font-bold text-slate-800 text-xs">${name}</p></div>
                 <a href="${hotelUrl}" target="_blank" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase shadow-lg">Резервирай</a>
             </div>`;
         }
-        // ДНИ
-        else if (line.toUpperCase().includes('ДЕН')) {
+        else if (line.toUpperCase().includes('ДЕН:')) {
             programHtml += `<div class="text-3xl font-black text-slate-900 border-b-8 border-blue-600/20 mt-16 mb-8 uppercase italic pb-2">${line.trim()}</div>`;
         }
-        // ВСИЧКИ АКТИВНОСТИ (Карти)
         else if (/[\u{1F300}-\u{1F9FF}]/u.test(line) && line.includes(':')) {
             const [titlePart, descPart] = line.split(':');
             const cleanTitle = titlePart.replace(/[\u{1F300}-\u{1F9FF}]/u, '').trim();
             const tpUrl = `https://tp.media/r?marker=701816&trs=1&p=3959&u=https%3A%2F%2Fwww.wayaway.io%2Fsearch%3Fquery%3D${encodeURIComponent(dest + " " + cleanTitle)}`;
             
             programHtml += `
-            <div class="bg-white p-8 rounded-[3.5rem] shadow-xl border border-slate-50 mb-6 flex justify-between items-center group">
+            <div class="bg-white p-8 rounded-[3.5rem] shadow-xl border border-slate-50 mb-6 flex justify-between items-center group transition">
                 <div class="flex gap-6 items-start">
                     <div class="flex flex-col">
                         <b class="text-slate-900 font-extrabold text-xl block mb-1 tracking-tight">${titlePart.trim()}</b>
@@ -132,8 +125,8 @@ function renderUI(dest, md) {
             <div class="bg-slate-900 p-12 rounded-[3.5rem] text-white mb-12 flex justify-between items-center shadow-2xl border-b-[12px] border-blue-600">
                 <div><h2 class="text-5xl font-black italic uppercase tracking-tighter">${dest}</h2><p class="text-xs opacity-50 tracking-[0.4em] mt-2 font-light">PREMIUM GUIDE BY ITINERFLAI</p></div>
                 <div class="flex gap-3">
-                    <button onclick="saveToCloud('${dest}')" class="bg-emerald-500 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase shadow-xl hover:scale-105 transition">Запази</button>
-                    <button onclick="saveToPDF('${dest}')" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase shadow-xl hover:scale-105 transition">PDF</button>
+                    <button onclick="saveToCloud('${dest}')" class="bg-emerald-500 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase shadow-xl">Запази</button>
+                    <button onclick="saveToPDF('${dest}')" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase shadow-xl">PDF</button>
                 </div>
             </div>
             <div class="mb-16 px-4">
@@ -142,7 +135,6 @@ function renderUI(dest, md) {
             </div>
             <div class="px-4">${programHtml}</div>
         </div>`;
-    
     res.classList.remove('hidden');
     res.scrollIntoView({ behavior: 'smooth' });
 }
