@@ -28,7 +28,7 @@ function setupAuth() {
             if (error) throw error;
             document.getElementById('authModal').classList.add('hidden');
             checkUser();
-        } catch (err) { alert(err.message); }
+        } catch (err) { alert("Грешка: " + err.message); }
     };
 }
 
@@ -53,15 +53,16 @@ async function generatePlan(e) {
     document.getElementById('result').classList.add('hidden');
 
     const prompt = `Направи елитен план за ${dest} за ${days} дни на БЪЛГАРСКИ. 
-    ИНСТРУКЦИЯ: НЕ ИЗПОЛЗВАЙ никакви символи като # или *. 
+    БЕЗ СИМВОЛИ КАТО # ИЛИ *. 
     
-    СТРУКТУРА ЗА ВСЕКИ ДЕН:
-    ХОТЕЛ: [Тип] - [Име] (Дай общо 4 за целия престой най-отгоре)
+    СТРУКТУРА:
+    1. ХОТЕЛИ: Дай 4 хотела (Лукс, Бутик, Бюджет, Апартамент). Формат: "ХОТЕЛ: [Тип] - [Име]"
+    2. ПРОГРАМА ЗА ВСЕКИ ДЕН (ЗАДЪЛЖИТЕЛНО ВКЛЮЧВАЙ ЗАКУСКА):
     ДЕН: [Номер]
     ☕ ЗАКУСКА: [Място] | [Описание]
-    🏛️ ЗАБЕЛЕЖИТЕЛНОСТИ: [Обект 1, Обект 2, Обект 3] | [Описание на маршрута]
+    🏛️ ЗАБЕЛЕЖИТЕЛНОСТИ: [3 обекта] | [Описание на маршрута]
     🍴 ОБЯД: [Ресторант] | [Описание]
-    📸 ЗАБЕЛЕЖИТЕЛНОСТИ: [Обект 4, Обект 5, Обект 6] | [Описание]
+    📸 ЗАБЕЛЕЖИТЕЛНОСТИ: [3 нови обекта] | [Описание]
     🌙 ВЕЧЕРЯ: [Ресторант] | [Атмосфера]`;
 
     try {
@@ -70,12 +71,12 @@ async function generatePlan(e) {
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${O_KEY}` },
             body: JSON.stringify({
                 model: "gpt-4o",
-                messages: [{role: "system", content: "Ти си професионален гид. Пиши чисто, без Markdown символи. Използвай емоджита за всяка точка."}, {role: "user", content: prompt}]
+                messages: [{role: "system", content: "Ти си елитен травъл агент. Пиши чисто, без Markdown. Всяка точка започва с емоджи и има ':'."}, {role: "user", content: prompt}]
             })
         });
         const data = await response.json();
         renderUI(dest, data.choices[0].message.content);
-    } catch (err) { alert("Грешка!"); }
+    } catch (err) { alert("AI Грешка!"); }
     finally { document.getElementById('loader').classList.add('hidden'); }
 }
 
@@ -84,11 +85,11 @@ function renderUI(dest, md) {
     let hotelsHtml = "";
     let programHtml = "";
     
-    // Пречистване на целия текст от излишни символи
     const cleanMd = md.replace(/[*#]/g, '');
     const lines = cleanMd.split('\n').filter(l => l.trim() !== "");
 
     lines.forEach(line => {
+        // Парсване на хотели
         if (line.toUpperCase().includes('ХОТЕЛ:')) {
             const content = line.split(':')[1];
             const parts = content.split('-');
@@ -101,12 +102,17 @@ function renderUI(dest, md) {
                 <a href="${hotelUrl}" target="_blank" rel="noopener noreferrer" class="bg-blue-600 text-white px-3 py-1.5 rounded-xl text-[9px] font-black uppercase shadow-md hover:bg-slate-900 transition">Резервирай</a>
             </div>`;
         }
+        // Парсване на Дни
         else if (line.toUpperCase().includes('ДЕН:')) {
             programHtml += `<div class="text-2xl font-black text-slate-900 border-b-4 border-blue-600/20 mt-12 mb-6 uppercase italic pb-1">${line.trim()}</div>`;
         }
+        // Парсване на програма (Закуска, Обекти и т.н.)
         else if (/[\u{1F300}-\u{1F9FF}]/u.test(line) && line.includes(':')) {
             const [titlePart, descPart] = line.split(':');
-            const mapUrl = `http://googleusercontent.com/maps.google.com/search?q=${encodeURIComponent(dest + " " + titlePart)}`;
+            const placeName = titlePart.replace(/[\u{1F300}-\u{1F9FF}]/u, '').trim();
+            // ФИКСИРАН ЛИНК ЗА ГУГЪЛ МАПС
+            const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest + " " + placeName)}`;
+            
             programHtml += `
             <div class="bg-white p-6 rounded-[2.5rem] shadow-lg border border-slate-50 mb-4 flex justify-between items-center group transition hover:border-blue-200">
                 <div class="flex gap-4 items-start">
@@ -133,9 +139,9 @@ function renderUI(dest, md) {
             </div>
             <div class="mb-12 px-4">
                 <h4 class="text-[11px] font-black text-slate-400 mb-4 uppercase tracking-[0.2em] italic border-l-4 border-blue-500 pl-3">ПРЕПОРЪЧАНО НАСТАНЯВАНЕ</h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${hotelsHtml || "<p class='text-xs italic text-slate-400'>Избираме хотели...</p>"}</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${hotelsHtml || "<p class='text-xs italic'>Генериране на хотели...</p>"}</div>
             </div>
-            <div class="px-4">${programHtml}</div>
+            <div class="px-4">${programHtml || "<p class='text-xs italic'>Генериране на програма...</p>"}</div>
         </div>`;
     
     res.classList.remove('hidden');
@@ -149,10 +155,10 @@ window.saveToPDF = function(n) {
 
 async function saveToCloud(dest) {
     const { data: { user } } = await sbClient.auth.getUser();
-    if (!user) return alert("Влезте в профила!");
+    if (!user) return alert("Моля, влезте в профила си!");
     const content = document.getElementById('pdfArea').innerHTML;
     await sbClient.from('itineraries').insert([{ user_id: user.id, destination: dest, content }]);
-    alert("Запазено! ✨");
+    alert("Програмата е запазена успешно! ✨");
 }
 
 document.addEventListener('DOMContentLoaded', () => {
