@@ -52,17 +52,19 @@ async function generatePlan(e) {
     document.getElementById('loader').classList.remove('hidden');
     document.getElementById('result').classList.add('hidden');
 
-    // СТРИКТЕН ПРОМПТ ЗА ГАРАНТИРАНИ ЗАКУСКИ
-    const prompt = `Направи елитен план за ${dest} за ${days} дни на БЪЛГАРСКИ. 
-    БЕЗ СИМВОЛИ # ИЛИ *. 
-    СТРУКТУРА ЗА ВСЕКИ ДЕН (БЕЗ ИЗКЛЮЧЕНИЯ):
-    ХОТЕЛ: [Тип] - [Име] (Дай 4 такива в началото на целия план)
+    const prompt = `Направи елитен план за ${dest} за ${days} дни на БЪЛГАРСКИ. БЕЗ СИМВОЛИ # ИЛИ *. 
+    1. ХОТЕЛИ: Дай точно 4 реда: "ХОТЕЛ: [Име]".
+    2. ПРОГРАМА: За всеки ден дай ЗАДЪЛЖИТЕЛНО на отделни редове:
     ДЕН: [Номер]
-    ☕ ЗАКУСКА: [Име на заведение] | [Описание]
-    🏛️ ЗАБЕЛЕЖИТЕЛНОСТИ: [Обекти] | [Описание]
-    🍴 ОБЯД: [Име на ресторант] | [Описание]
-    📸 ЗАБЕЛЕЖИТЕЛНОСТИ: [Обекти] | [Описание]
-    🌙 ВЕЧЕРЯ: [Име на ресторант] | [Описание]`;
+    ☕ ЗАКУСКА: [Място] : [Описание]
+    🏛️ ОБЕКТ: [Забележителност 1] : [Описание]
+    🏛️ ОБЕКТ: [Забележителност 2] : [Описание]
+    🏛️ ОБЕКТ: [Забележителност 3] : [Описание]
+    🍴 ОБЯД: [Ресторант] : [Описание]
+    📸 ОБЕКТ: [Забележителност 4] : [Описание]
+    📸 ОБЕКТ: [Забележителност 5] : [Описание]
+    🌙 ВЕЧЕРЯ: [Ресторант] : [Описание]
+    ВАЖНО: НИКАКВО групиране. Всеки обект на НОВ РЕД с емоджи и ':' за разделител.`;
 
     try {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -70,7 +72,7 @@ async function generatePlan(e) {
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${O_KEY}` },
             body: JSON.stringify({
                 model: "gpt-4o",
-                messages: [{role: "system", content: "Ти си професионален гид. Всеки елемент от програмата ЗАДЪЛЖИТЕЛНО започва с емоджи и съдържа ':' за разделител. Пиши кратко."}, {role: "user", content: prompt}]
+                messages: [{role: "system", content: "Ти си премиум гид. Пиши кратко. Всеки обект трябва да е на нов ред с емоджи и име."}, {role: "user", content: prompt}]
             })
         });
         const data = await response.json();
@@ -83,33 +85,33 @@ function renderUI(dest, md) {
     const res = document.getElementById('result');
     let hotelsHtml = "";
     let programHtml = "";
+    let hCount = 0;
     
     const lines = md.replace(/[*#]/g, '').split('\n').filter(l => l.trim() !== "");
 
     lines.forEach(line => {
-        // ХОТЕЛИ
-        if (line.toUpperCase().startsWith('ХОТЕЛ:')) {
-            const content = line.split(':')[1].trim();
-            const name = content.includes('-') ? content.split('-')[1].trim() : content;
+        const l = line.trim();
+        const upper = l.toUpperCase();
+        
+        if (upper.includes('ХОТЕЛ:') && hCount < 4) {
+            const name = l.split(':')[1].trim();
             const hotelUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest + " " + name)}&aid=701816`;
             hotelsHtml += `
             <div class="bg-white p-4 rounded-2xl flex justify-between items-center border border-slate-100 shadow-sm">
                 <div><p class="text-[8px] font-black text-blue-600 uppercase mb-0.5">Настаняване</p><p class="font-bold text-slate-800 text-[11px] leading-tight">${name}</p></div>
                 <a href="${hotelUrl}" target="_blank" rel="noopener noreferrer" class="bg-blue-600 text-white px-3 py-1.5 rounded-xl text-[9px] font-black uppercase shadow-md flex-shrink-0">Резервирай</a>
             </div>`;
+            hCount++;
         }
-        // ДНИ
-        else if (line.toUpperCase().includes('ДЕН:')) {
-            programHtml += `<div class="text-2xl font-black text-slate-900 border-b-4 border-blue-600/20 mt-10 mb-6 uppercase italic pb-1">${line.trim()}</div>`;
+        else if (upper.includes('ДЕН:')) {
+            programHtml += `<div class="text-2xl font-black text-slate-900 border-b-4 border-blue-600/20 mt-10 mb-6 uppercase italic pb-1">${l}</div>`;
         }
-        // ПРОГРАМА (ЗАКУСКИ, ОБЯДИ, ВЕЧЕРИ, ОБЕКТИ)
-        else if (/[\u{1F300}-\u{1F9FF}]/u.test(line) && line.includes(':')) {
-            const parts = line.split(':');
+        else if (/[\u{1F300}-\u{1F9FF}]/u.test(l) && l.includes(':')) {
+            const parts = l.split(':');
             const title = parts[0].trim();
             const desc = parts[1] ? parts[1].trim() : "";
             const cleanTitle = title.replace(/[\u{1F300}-\u{1F9FF}]/u, '').trim();
             
-            // ФИКСИРАН АФИЛИЕЙТ ЛИНК КЪМ WAYAWAY С ТВОЕТО ID 701816
             const tpUrl = `https://wayaway.tp.st/search?marker=701816&query=${encodeURIComponent(dest + " " + cleanTitle)}&subid=itinerflai`;
             
             programHtml += `
@@ -144,7 +146,6 @@ function renderUI(dest, md) {
     res.scrollIntoView({ behavior: 'smooth' });
 }
 
-// PDF и Cloud функциите са запазени без промяна
 window.saveToPDF = function(n) {
     const el = document.getElementById('pdfArea');
     html2pdf().set({ margin: 10, filename: n+'.pdf', html2canvas: { scale: 3 }, jsPDF: { format: 'a4' } }).from(el).save();
