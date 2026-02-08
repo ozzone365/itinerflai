@@ -25,15 +25,14 @@ async function generatePlan(e) {
 
     const prompt = `Направи елитен план за ${dest} за ${days} дни на БЪЛГАРСКИ. 
     БЕЗ СИМВОЛИ # ИЛИ *. 
-    СТРУКТУРА:
-    1. 4 Хотела най-отгоре: ХОТЕЛ: [Тип] - [Име]
-    2. Програма по дни (всяка точка започва с емоджи):
+    СТРУКТУРА ЗА ВСЕКИ ДЕН:
+    ХОТЕЛ: [Тип] - [Име]
     ДЕН: [Номер]
-    ☕ ЗАКУСКА: [Име] | [Описание]
-    🏛️ ЗАБЕЛЕЖИТЕЛНОСТИ: [Обекти] | [Описание]
-    🍴 ОБЯД: [Име] | [Описание]
-    📸 ЗАБЕЛЕЖИТЕЛНОСТИ: [Обекти] | [Описание]
-    🌙 ВЕЧЕРЯ: [Име] | [Описание]`;
+    ☕ ЗАКУСКА: [Място] | [Описание]
+    🏛️ ЗАБЕЛЕЖИТЕЛНОСТИ: [Обект 1, 2, 3] | [Описание]
+    🍴 ОБЯД: [Ресторант] | [Описание]
+    📸 ЗАБЕЛЕЖИТЕЛНОСТИ: [Обект 4, 5, 6] | [Описание]
+    🌙 ВЕЧЕРЯ: [Ресторант] | [Описание]`;
 
     try {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -41,7 +40,7 @@ async function generatePlan(e) {
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${O_KEY}` },
             body: JSON.stringify({
                 model: "gpt-4o",
-                messages: [{role: "system", content: "Ти си професионален гид. Пиши чисто, ползвай емоджи за всяка карта."}, {role: "user", content: prompt}]
+                messages: [{role: "system", content: "Ти си професионален гид. Всяка точка от програмата трябва да започва с емоджи и да има ':'."}, {role: "user", content: prompt}]
             })
         });
         const data = await response.json();
@@ -54,33 +53,31 @@ function renderUI(dest, md) {
     const res = document.getElementById('result');
     let hotelsHtml = "";
     let programHtml = "";
+    
     const cleanMd = md.replace(/[*#]/g, '');
     const lines = cleanMd.split('\n').filter(l => l.trim() !== "");
 
     lines.forEach(line => {
-        // ХОТЕЛИ -> Booking.com + ID
+        // 1. ХОТЕЛИ (Booking + ID 701816)
         if (line.toUpperCase().includes('ХОТЕЛ:')) {
             const content = line.split(':')[1];
-            const parts = content.split('-');
-            const name = parts[1] ? parts[1].trim() : parts[0].trim();
+            const name = content.includes('-') ? content.split('-')[1].trim() : content.trim();
             const hotelUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest + " " + name)}&aid=701816`;
             hotelsHtml += `
             <div class="bg-white p-4 rounded-[2rem] flex justify-between items-center border border-slate-100 shadow-sm">
-                <div><p class="text-[9px] font-black text-blue-600 uppercase mb-0.5">${parts[0].trim()}</p><p class="font-bold text-slate-800 text-[11px]">${name}</p></div>
+                <div><p class="text-[9px] font-black text-blue-600 uppercase mb-0.5">Препоръчан хотел</p><p class="font-bold text-slate-800 text-[11px]">${name}</p></div>
                 <a href="${hotelUrl}" target="_blank" class="bg-blue-600 text-white px-3 py-1.5 rounded-xl text-[9px] font-black uppercase shadow-md">Резервирай</a>
             </div>`;
         }
+        // 2. ДНИ
         else if (line.toUpperCase().includes('ДЕН:')) {
             programHtml += `<div class="text-2xl font-black text-slate-900 border-b-4 border-blue-600/20 mt-12 mb-6 uppercase italic pb-1">${line.trim()}</div>`;
         }
-        // ВСИЧКИ КАРТИ (Закуска, Забележителности, Обяд, Вечеря) -> Travelpayouts търсачка
+        // 3. ВСИЧКО ОСТАНАЛО (Закуска, Обекти, Обяд, Вечеря) -> WayAway + ID 701816
         else if (/[\u{1F300}-\u{1F9FF}]/u.test(line) && line.includes(':')) {
             const [titlePart, descPart] = line.split(':');
-            const placeName = titlePart.replace(/[\u{1F300}-\u{1F9FF}]/u, '').trim();
-            
-            // ЛИНК ПРЕЗ TRAVELPAYOUTS (Търсене на преживявания/билети/ресторанти)
-            // Ако няма директен афилиейт за ресторанта, ползваме WayAway търсачка за локацията с твоя ID
-            const tpUrl = `https://wayaway.tp.st/search?marker=701816&query=${encodeURIComponent(dest + " " + placeName)}`;
+            const cleanTitle = titlePart.replace(/[\u{1F300}-\u{1F9FF}]/u, '').trim();
+            const tpUrl = `https://tp.media/r?marker=701816&trs=1&p=3959&u=https%3A%2F%2Fwww.wayaway.io%2Fsearch%3Fquery%3D${encodeURIComponent(dest + " " + cleanTitle)}`;
             
             programHtml += `
             <div class="bg-white p-6 rounded-[2.5rem] shadow-lg border border-slate-50 mb-4 flex justify-between items-center group transition hover:border-blue-200">
@@ -125,7 +122,7 @@ async function saveToCloud(dest) {
     if (!user) return alert("Влезте в профила!");
     const content = document.getElementById('pdfArea').innerHTML;
     await sbClient.from('itineraries').insert([{ user_id: user.id, destination: dest, content }]);
-    alert("Запазено!");
+    alert("Запазено! ✨");
 }
 
 document.addEventListener('DOMContentLoaded', () => {
