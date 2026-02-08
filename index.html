@@ -10,9 +10,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <link rel="stylesheet" href="style.css">
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="app.js" defer></script>
+    <script src="app.js"></script>
 </head>
 <body>
 
@@ -72,53 +73,53 @@
                     <h3 data-lang="paramsTitle" class="text-[11px] font-black uppercase mb-8 border-b pb-4 text-slate-400 tracking-[0.2em] italic">Параметри</h3>
                     
                    <form id="planForm" class="space-y-5">
-    <div class="space-y-1">
-        <label data-lang="labelDest" class="text-[9px] font-black uppercase text-slate-400 ml-4">Дестинация</label>
-        <input type="text" id="destination" required placeholder="Напр. Париж, Франция" class="w-full px-6 py-5 rounded-2xl border border-slate-200 text-sm bg-slate-50 outline-none">
-    </div>
+                        <div class="space-y-1">
+                            <label data-lang="labelDest" class="text-[9px] font-black uppercase text-slate-400 ml-4">Дестинация</label>
+                            <input type="text" id="destination" required placeholder="Напр. Париж, Франция" class="w-full px-6 py-5 rounded-2xl border border-slate-200 text-sm bg-slate-50 outline-none">
+                        </div>
 
-    <div class="grid grid-cols-2 gap-4">
-        <div>
-            <label data-lang="labelStyle" class="text-[9px] font-black uppercase text-slate-400 ml-4">Стил</label>
-            <select id="travelStyle" class="w-full px-5 py-5 rounded-2xl border border-slate-200 bg-slate-50 text-[10px] font-black uppercase">
-                <option value="balanced">Балансиран</option>
-                <option value="luxury">Луксозен</option>
-                <option value="budget">Бюджетен</option>
-            </select>
-        </div>
-        <div>
-            <label data-lang="labelDate" class="text-[9px] font-black uppercase text-slate-400 ml-4">Дата</label>
-            <input type="date" id="startDate" class="w-full px-4 py-5 rounded-2xl border border-slate-200 text-[11px] font-bold bg-slate-50 outline-none">
-        </div>
-    </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label data-lang="labelStyle" class="text-[9px] font-black uppercase text-slate-400 ml-4">Стил</label>
+                                <select id="travelStyle" class="w-full px-5 py-5 rounded-2xl border border-slate-200 bg-slate-50 text-[10px] font-black uppercase">
+                                    <option value="balanced">Балансиран</option>
+                                    <option value="luxury">Луксозен</option>
+                                    <option value="budget">Бюджетен</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label data-lang="labelDate" class="text-[9px] font-black uppercase text-slate-400 ml-4">Дата</label>
+                                <input type="date" id="startDate" class="w-full px-4 py-5 rounded-2xl border border-slate-200 text-[11px] font-bold bg-slate-50 outline-none">
+                            </div>
+                        </div>
 
-    <div class="grid grid-cols-2 gap-4">
-        <div>
-            <label data-lang="labelDays" class="text-[9px] font-black uppercase text-slate-400 ml-4">Дни</label>
-            <input type="number" id="days" value="3" class="w-full px-6 py-5 rounded-2xl border border-slate-200 text-sm font-black bg-slate-50">
-        </div>
-        <div>
-            <label data-lang="labelTravelers" class="text-[9px] font-black uppercase text-slate-400 ml-4">Пътници</label>
-            <input type="number" id="travelers" value="2" class="w-full px-6 py-5 rounded-2xl border border-slate-200 text-sm font-black bg-slate-50">
-        </div>
-    </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label data-lang="labelDays" class="text-[9px] font-black uppercase text-slate-400 ml-4">Дни</label>
+                                <input type="number" id="days" value="3" class="w-full px-6 py-5 rounded-2xl border border-slate-200 text-sm font-black bg-slate-50">
+                            </div>
+                            <div>
+                                <label data-lang="labelTravelers" class="text-[9px] font-black uppercase text-slate-400 ml-4">Пътници</label>
+                                <input type="number" id="travelers" value="2" class="w-full px-6 py-5 rounded-2xl border border-slate-200 text-sm font-black bg-slate-50">
+                            </div>
+                        </div>
 
-    <div class="grid grid-cols-2 gap-4">
-        <div>
-            <label data-lang="labelBudget" class="text-[9px] font-black uppercase text-slate-400 ml-4">Бюджет</label>
-            <input type="number" id="budget" value="1000" class="w-full px-6 py-5 rounded-2xl border border-slate-200 text-sm font-black bg-slate-50">
-        </div>
-        <div>
-            <label data-lang="labelCurrency" class="text-[9px] font-black uppercase text-slate-400 ml-4">Валута</label>
-            <select id="currency" class="w-full px-5 py-5 rounded-2xl border border-slate-200 bg-slate-50 text-[10px] font-black uppercase">
-                <option value="EUR">EUR (€)</option>
-                <option value="BGN">BGN (лв)</option>
-            </select>
-        </div>
-    </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label data-lang="labelBudget" class="text-[9px] font-black uppercase text-slate-400 ml-4">Бюджет</label>
+                                <input type="number" id="budget" value="1000" class="w-full px-6 py-5 rounded-2xl border border-slate-200 text-sm font-black bg-slate-50">
+                            </div>
+                            <div>
+                                <label data-lang="labelCurrency" class="text-[9px] font-black uppercase text-slate-400 ml-4">Валута</label>
+                                <select id="currency" class="w-full px-5 py-5 rounded-2xl border border-slate-200 bg-slate-50 text-[10px] font-black uppercase">
+                                    <option value="EUR">EUR (€)</option>
+                                    <option value="BGN">BGN (лв)</option>
+                                </select>
+                            </div>
+                        </div>
 
-    <button type="submit" data-lang="createBtn" class="w-full bg-blue-600 text-white font-black py-6 rounded-2xl uppercase text-[11px] tracking-widest mt-4 shadow-xl hover:bg-slate-900 transition">Създай План <i class="fas fa-chevron-right ml-2"></i></button>
-</form>
+                        <button type="submit" data-lang="createBtn" class="w-full bg-blue-600 text-white font-black py-6 rounded-2xl uppercase text-[11px] tracking-widest mt-4 shadow-xl hover:bg-slate-900 transition">Създай План <i class="fas fa-chevron-right ml-2"></i></button>
+                    </form>
 
                     <div class="mt-10 p-8 bg-slate-900 rounded-[2.5rem] text-white">
                         <h4 class="text-[10px] font-black uppercase text-blue-400 mb-5 border-b border-white/10 pb-2 italic">
