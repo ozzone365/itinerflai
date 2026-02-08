@@ -126,14 +126,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function generatePlan(e) {
     e.preventDefault();
-    if (!O_KEY) return alert("Системата се зарежда, моля изчакайте 2 секунди...");
+    if (!O_KEY) return alert("Системата се зарежда...");
+
+    const dest = document.getElementById('destination').value;
+    const style = document.getElementById('travelStyle').value;
+    const days = document.getElementById('days').value;
+    const lang = document.getElementById('langSwitch').value;
 
     document.getElementById('placeholder').classList.add('hidden');
     document.getElementById('result').classList.add('hidden');
     document.getElementById('loader').classList.remove('hidden');
 
-    const dest = document.getElementById('destination').value;
-    const lang = document.getElementById('langSwitch').value;
+    // ТУК ДОБАВИ ТВОЯ АФИЛИЕЙТ ID
+    const affId = "ТВОЯ_ID"; 
+
+    const prompt = `Направи професионален и визуален туристически план за ${dest} за ${days} дни, стил: ${style}. 
+    Език: ${lang === 'bg' ? 'Български' : 'English'}.
+    
+    СТРУКТУРА ЗА ВСЕКИ ДЕН:
+    - Заглавие: "Ден X: [Име на темата]"
+    - Закуска, Обяд и Вечеря: Конкретни места с описание.
+    - Забележителности: С кратки любопитни факти.
+    
+    ВАЖНО: 
+    1. За всеки хотел или апартамент добавяй линк: [Виж тук](https://www.booking.com/searchresults.html?ss=${dest}&aid=${affId})
+    2. За всяка забележителност добавяй линк към Google Maps: [Карта](https://www.google.com/maps/search/${dest}+[име])
+    3. Използвай Markdown за заглавия (###) и подчертаване (**).`;
 
     try {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -141,13 +159,14 @@ async function generatePlan(e) {
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${O_KEY}` },
             body: JSON.stringify({
                 model: "gpt-4o",
-                messages: [{role: "user", content: `Направи подробен туристически план за ${dest} на ${lang === 'bg' ? 'български' : 'английски'}. Включи хотели, ресторанти и забележителности.`}]
+                messages: [{role: "system", content: "Ти си професионален травъл дизайнер. Отговаряш в красив Markdown формат."}, 
+                           {role: "user", content: prompt}]
             })
         });
         const data = await response.json();
         renderUI(dest, data.choices[0].message.content);
     } catch (err) {
-        alert("Грешка при генериране на плана.");
+        alert("Грешка при генериране.");
     } finally {
         document.getElementById('loader').classList.add('hidden');
     }
@@ -155,21 +174,57 @@ async function generatePlan(e) {
 
 function renderUI(dest, content) {
     const res = document.getElementById('result');
-    if (!res) return;
+    
+    // Превръщаме Markdown символите в красиви икони и лесно четим текст
+    const formattedContent = content
+        .replace(/###/g, '<h3 class="text-xl font-black text-blue-600 mt-6 mb-2 uppercase italic">')
+        .replace(/Закуска:/g, '<span><i class="fas fa-coffee mr-2 text-orange-400"></i><b>Закуска:</b></span>')
+        .replace(/Обяд:/g, '<span><i class="fas fa-utensils mr-2 text-emerald-500"></i><b>Обяд:</b></span>')
+        .replace(/Вечеря:/g, '<span><i class="fas fa-moon mr-2 text-purple-500"></i><b>Вечеря:</b></span>');
+
     res.innerHTML = `
-        <div id="pdfArea" class="animate-fade-in">
-            <div class="result-header flex justify-between items-center shadow-2xl mb-8 p-6 bg-slate-900 text-white rounded-3xl">
+        <div id="pdfArea" class="animate-fade-in space-y-6">
+            <div class="bg-slate-900 p-8 rounded-[2.5rem] text-white shadow-2xl flex justify-between items-center border-b-4 border-blue-600">
                 <div>
-                    <h2 class="text-4xl font-black uppercase italic">${dest}</h2>
-                    <p class="text-[10px] opacity-70 uppercase tracking-widest mt-2">Генериран от ITINERFLAI AI</p>
+                    <h2 class="text-4xl font-black uppercase italic tracking-tighter">${dest}</h2>
+                    <p class="text-[10px] opacity-60 uppercase tracking-widest mt-1">Персонализиран AI План</p>
                 </div>
-                <button onclick="html2pdf().from(document.getElementById('pdfArea')).save('${dest}-itinerflai.pdf')" class="bg-white/20 w-14 h-14 rounded-2xl flex items-center justify-center hover:bg-white/40 transition">
-                    <i class="fas fa-file-pdf text-xl"></i>
-                </button>
+                <div class="bg-blue-600 p-4 rounded-2xl shadow-lg">
+                    <i class="fas fa-route text-2xl"></i>
+                </div>
             </div>
-            <div class="bg-white p-10 rounded-[3rem] shadow-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
-                ${content}
+
+            <div class="bg-white p-8 md:p-12 rounded-[3rem] shadow-xl text-slate-700 leading-relaxed border border-slate-100">
+                <div class="prose prose-blue max-w-none">
+                    ${formattedContent}
+                </div>
+                
+                <div class="mt-12 pt-8 border-t flex flex-col md:flex-row gap-4 justify-between items-center">
+                    <button onclick="window.print()" class="text-[10px] font-black uppercase text-slate-400 hover:text-blue-600 transition">
+                        <i class="fas fa-print mr-2"></i>Принтирай
+                    </button>
+                    
+                    <button onclick="exportToPDF('${dest}')" class="bg-emerald-500 hover:bg-slate-900 text-white px-10 py-4 rounded-2xl font-black uppercase text-[11px] tracking-widest transition shadow-lg flex items-center gap-3">
+                        <i class="fas fa-file-pdf text-lg"></i> Запази Програмата (PDF)
+                    </button>
+                </div>
             </div>
         </div>`;
+    
     res.classList.remove('hidden');
+    res.scrollIntoView({ behavior: 'smooth' });
 }
+
+// Помощна функция за PDF
+window.exportToPDF = function(name) {
+    const element = document.getElementById('pdfArea');
+    const opt = {
+        margin: 10,
+        filename: `${name}-itinerflai.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(element).save();
+};
+
