@@ -1,7 +1,7 @@
 // Конфигурация
-const S_URL = '';
-const S_KEY = ''; 
-const O_KEY = ''; 
+const S_URL = window.location.hostname === 'localhost' ? "" : "PROCESSED_BY_VERCEL";
+const S_KEY = window.location.hostname === 'localhost' ? "" : "PROCESSED_BY_VERCEL";
+const O_KEY = window.location.hostname === 'localhost' ? "" : "PROCESSED_BY_VERCEL"; 
 
 const supabase = window.supabase.createClient(S_URL, S_KEY);
 
@@ -141,4 +141,5 @@ function renderUI(dest, content) {
             </div>
         </div>`;
     res.classList.remove('hidden');
+
 }
