@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function generatePlan(e) {
     e.preventDefault();
-    if (!O_KEY) return alert("Системата се зарежда...");
+    if (!O_KEY) return alert("Системата все още се зарежда...");
 
     const dest = document.getElementById('destination').value;
     const style = document.getElementById('travelStyle').value;
@@ -137,21 +137,24 @@ async function generatePlan(e) {
     document.getElementById('result').classList.add('hidden');
     document.getElementById('loader').classList.remove('hidden');
 
-    // ТУК ДОБАВИ ТВОЯ АФИЛИЕЙТ ID
-    const affId = "ТВОЯ_ID"; 
+    const affId = "ТВОЯ_ID"; // Сложи твоя афилиейт ID тук
 
-    const prompt = `Направи професионален и визуален туристически план за ${dest} за ${days} дни, стил: ${style}. 
+    const prompt = `Направи луксозен туристически план за ${dest} за ${days} дни, стил: ${style}. 
     Език: ${lang === 'bg' ? 'Български' : 'English'}.
     
-    СТРУКТУРА ЗА ВСЕКИ ДЕН:
-    - Заглавие: "Ден X: [Име на темата]"
-    - Закуска, Обяд и Вечеря: Конкретни места с описание.
-    - Забележителности: С кратки любопитни факти.
+    СТРОГА СТРУКТУРА:
+    ### Ден [X]: [Заглавие]
+    [Кратко описание за деня]
     
-    ВАЖНО: 
-    1. За всеки хотел или апартамент добавяй линк: [Виж тук](https://www.booking.com/searchresults.html?ss=${dest}&aid=${affId})
-    2. За всяка забележителност добавяй линк към Google Maps: [Карта](https://www.google.com/maps/search/${dest}+[име])
-    3. Използвай Markdown за заглавия (###) и подчертаване (**).`;
+    ХОТЕЛ: [Име на хотел]
+    Линк за резервация: https://www.booking.com/searchresults.html?ss=${dest}&aid=${affId}
+    
+    ЗАКУСКА: [Място] - [Описание]
+    ОБЯД: [Място] - [Описание]
+    ВЕЧЕРЯ: [Място] - [Описание]
+    
+    ЗАБЕЛЕЖИТЕЛНОСТИ:
+    - [Име]: [Инфо]. Карта: https://www.google.com/maps/search/${dest}+[име]`;
 
     try {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -159,7 +162,7 @@ async function generatePlan(e) {
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${O_KEY}` },
             body: JSON.stringify({
                 model: "gpt-4o",
-                messages: [{role: "system", content: "Ти си професионален травъл дизайнер. Отговаряш в красив Markdown формат."}, 
+                messages: [{role: "system", content: "Ти си елитен травъл агент. Използвай главни букви за ЗАКУСКА, ОБЯД, ВЕЧЕРЯ и ХОТЕЛ."}, 
                            {role: "user", content: prompt}]
             })
         });
@@ -171,41 +174,40 @@ async function generatePlan(e) {
         document.getElementById('loader').classList.add('hidden');
     }
 }
-
 function renderUI(dest, content) {
     const res = document.getElementById('result');
     
-    // Превръщаме Markdown символите в красиви икони и лесно четим текст
-    const formattedContent = content
-        .replace(/###/g, '<h3 class="text-xl font-black text-blue-600 mt-6 mb-2 uppercase italic">')
-        .replace(/Закуска:/g, '<span><i class="fas fa-coffee mr-2 text-orange-400"></i><b>Закуска:</b></span>')
-        .replace(/Обяд:/g, '<span><i class="fas fa-utensils mr-2 text-emerald-500"></i><b>Обяд:</b></span>')
-        .replace(/Вечеря:/g, '<span><i class="fas fa-moon mr-2 text-purple-500"></i><b>Вечеря:</b></span>');
+    // Форматиране с икони и стил
+    let html = content
+        .replace(/### (.*)/g, '<div class="day-header mt-12 mb-6 text-2xl font-black text-blue-600 uppercase italic border-b-2 border-blue-100 pb-2">$1</div>')
+        .replace(/ХОТЕЛ:/g, '<div class="bg-blue-50 p-4 rounded-2xl mb-4 border-l-4 border-blue-500"><b><i class="fas fa-hotel mr-2"></i>ПРЕПОРЪЧАН ХОТЕЛ:</b>')
+        .replace(/ЗАКУСКА:/g, '<div class="mt-4"><b><i class="fas fa-coffee text-orange-400 mr-2"></i>ЗАКУСКА:</b>')
+        .replace(/ОБЯД:/g, '<div class="mt-4"><b><i class="fas fa-utensils text-emerald-500 mr-2"></i>ОБЯД:</b>')
+        .replace(/ВЕЧЕРЯ:/g, '<div class="mt-4"><b><i class="fas fa-moon text-purple-500 mr-2"></i>ВЕЧЕРЯ:</b>')
+        .replace(/ЗАБЕЛЕЖИТЕЛНОСТИ:/g, '<div class="mt-6 font-black text-slate-400 uppercase text-xs tracking-widest">Топ локации за деня:</div>');
 
     res.innerHTML = `
-        <div id="pdfArea" class="animate-fade-in space-y-6">
-            <div class="bg-slate-900 p-8 rounded-[2.5rem] text-white shadow-2xl flex justify-between items-center border-b-4 border-blue-600">
+        <div id="pdfArea" class="animate-fade-in">
+            <div class="bg-slate-900 p-10 rounded-[3rem] text-white shadow-2xl mb-8 flex justify-between items-end border-b-8 border-blue-600">
                 <div>
-                    <h2 class="text-4xl font-black uppercase italic tracking-tighter">${dest}</h2>
-                    <p class="text-[10px] opacity-60 uppercase tracking-widest mt-1">Персонализиран AI План</p>
+                    <h2 class="text-5xl font-black uppercase italic tracking-tighter">${dest}</h2>
+                    <p class="opacity-50 text-[10px] uppercase tracking-[0.3em] mt-2">Personalized AI Itinerary</p>
                 </div>
-                <div class="bg-blue-600 p-4 rounded-2xl shadow-lg">
-                    <i class="fas fa-route text-2xl"></i>
-                </div>
+                <div class="text-blue-500 text-4xl mb-2"><i class="fas fa-plane-departure"></i></div>
             </div>
 
-            <div class="bg-white p-8 md:p-12 rounded-[3rem] shadow-xl text-slate-700 leading-relaxed border border-slate-100">
-                <div class="prose prose-blue max-w-none">
-                    ${formattedContent}
+            <div class="bg-white p-10 md:p-16 rounded-[4rem] shadow-xl text-slate-700 leading-relaxed border border-slate-50">
+                <div class="itinerary-body">
+                    ${html}
                 </div>
-                
-                <div class="mt-12 pt-8 border-t flex flex-col md:flex-row gap-4 justify-between items-center">
-                    <button onclick="window.print()" class="text-[10px] font-black uppercase text-slate-400 hover:text-blue-600 transition">
-                        <i class="fas fa-print mr-2"></i>Принтирай
+
+                <div class="mt-16 pt-10 border-t border-slate-100 flex flex-col md:flex-row gap-6 items-center justify-between">
+                    <button onclick="window.print()" class="text-slate-400 font-black uppercase text-[10px] hover:text-blue-600 transition">
+                        <i class="fas fa-print mr-2"></i>Печат на страницата
                     </button>
                     
-                    <button onclick="exportToPDF('${dest}')" class="bg-emerald-500 hover:bg-slate-900 text-white px-10 py-4 rounded-2xl font-black uppercase text-[11px] tracking-widest transition shadow-lg flex items-center gap-3">
-                        <i class="fas fa-file-pdf text-lg"></i> Запази Програмата (PDF)
+                    <button onclick="savePlan('${dest}')" class="bg-blue-600 hover:bg-slate-900 text-white px-12 py-5 rounded-2xl font-black uppercase text-xs tracking-widest transition-all shadow-2xl hover:-translate-y-1">
+                        <i class="fas fa-file-pdf mr-2"></i> Запази PDF Програма
                     </button>
                 </div>
             </div>
@@ -216,15 +218,16 @@ function renderUI(dest, content) {
 }
 
 // Помощна функция за PDF
-window.exportToPDF = function(name) {
+window.savePlan = function(destName) {
     const element = document.getElementById('pdfArea');
-    const opt = {
+    const options = {
         margin: 10,
-        filename: `${name}-itinerflai.pdf`,
+        filename: `${destName}-plan.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
+        html2canvas: { scale: 2 },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
-    html2pdf().set(opt).from(element).save();
+    html2pdf().set(options).from(element).save();
 };
+
 
