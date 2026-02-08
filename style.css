@@ -1,0 +1,37 @@
+/* Дизайн на Itinerflai */
+body { 
+    font-family: 'Inter', sans-serif; 
+    background-color: #f8fafc; 
+    transition: all 0.3s ease; 
+}
+
+.hero-gradient { 
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); 
+    position: relative; 
+    overflow: hidden; 
+}
+
+.hero-gradient::after { 
+    content: ''; 
+    position: absolute; 
+    inset: 0; 
+    background: url('https://www.transparenttextures.com/patterns/cubes.png'); 
+    opacity: 0.1; 
+}
+
+.card-shadow { 
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.1); 
+}
+
+.result-header { 
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%); 
+    border-radius: 3rem; 
+    color: white; 
+    padding: 60px 40px; 
+}
+
+/* Стилизиране на input за дата за по-добър вид */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(0.5);
+}
