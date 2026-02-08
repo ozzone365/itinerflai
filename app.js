@@ -5,7 +5,6 @@ async function init() {
         const res = await fetch('/api/config');
         const config = await res.json();
         S_URL = config.supabaseUrl; S_KEY = config.supabaseKey; O_KEY = config.openaiKey;
-
         if (window.supabase && !sbClient) {
             sbClient = window.supabase.createClient(S_URL, S_KEY);
             setupAuth();
@@ -56,20 +55,20 @@ async function generatePlan(e) {
     document.getElementById('loader').classList.remove('hidden');
     document.getElementById('result').classList.add('hidden');
 
-    const prompt = `Make a rich travel plan for ${dest} for ${days} days. 
-    FORMAT HOTELS:
-    H: Luxury | [Name] | https://www.booking.com/searchresults.html?ss=${dest}&aid=${affId}
-    H: Boutique | [Name] | https://www.booking.com/searchresults.html?ss=${dest}&aid=${affId}
-    H: Budget | [Name] | https://www.booking.com/searchresults.html?ss=${dest}&aid=${affId}
-    H: Apartment | [Name] | https://www.booking.com/searchresults.html?ss=${dest}&aid=${affId}
+    const prompt = `Направи богат план за ${dest} за ${days} дни на БЪЛГАРСКИ. 
+    ХОТЕЛИ (4 ОПЦИИ):
+    H: Лукс | [Име] | https://www.booking.com/searchresults.html?ss=${dest}&aid=${affId}
+    H: Бутик | [Име] | https://www.booking.com/searchresults.html?ss=${dest}&aid=${affId}
+    H: Бюджет | [Име] | https://www.booking.com/searchresults.html?ss=${dest}&aid=${affId}
+    H: Апартамент | [Име] | https://www.booking.com/searchresults.html?ss=${dest}&aid=${affId}
 
-    PROGRAM FORMAT:
+    ПРОГРАМА (Минимум 3 обекта на секция с описания):
     ### Ден [X]
     ITEM: ☕ ЗАКУСКА | [Място] | [Описание 2 изречения] | https://www.google.com/maps/search/${dest}+[Място]
-    ITEM: 🏛️ СУТРИН | [3-4 обекта] | [Описание на маршрута] | https://www.google.com/maps/search/${dest}+Sightseeing
-    ITEM: 🍴 ОБЯД | [Място] | [Защо си струва] | https://www.google.com/maps/search/${dest}+Restaurant
-    ITEM: 📸 СЛЕДОБЕД | [3-4 обекта] | [Интересни факти] | https://www.google.com/maps/search/${dest}+Attractions
-    ITEM: 🌙 ВЕЧЕРЯ | [Място] | [Атмосфера] | https://www.google.com/maps/search/${dest}+Dinner`;
+    ITEM: 🏛️ СУТРИН | [Обект1, Обект2, Обект3] | [Детайлен маршрут] | https://www.google.com/maps/search/${dest}+Sights
+    ITEM: 🍴 ОБЯД | [Ресторант] | [Защо си струва] | https://www.google.com/maps/search/${dest}+Restaurant
+    ITEM: 📸 СЛЕДОБЕД | [Обект1, Обект2, Обект3] | [Инфо и история] | https://www.google.com/maps/search/${dest}+Photo
+    ITEM: 🌙 ВЕЧЕРЯ | [Ресторант] | [Атмосфера] | https://www.google.com/maps/search/${dest}+Dinner`;
 
     try {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -77,58 +76,58 @@ async function generatePlan(e) {
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${O_KEY}` },
             body: JSON.stringify({
                 model: "gpt-4o",
-                messages: [{role: "system", content: "Пиши на БЪЛГАРСКИ. Използвай само зададения формат."}, {role: "user", content: prompt}]
+                messages: [{role: "system", content: "Ти си елитен травъл дизайнер. Пиши само в зададения формат."}, {role: "user", content: prompt}]
             })
         });
         const data = await response.json();
         renderUI(dest, data.choices[0].message.content);
-    } catch (err) { alert("Грешка!"); }
+    } catch (err) { alert("Грешка при AI!"); }
     finally { document.getElementById('loader').classList.add('hidden'); }
 }
 
 function renderUI(dest, md) {
     const res = document.getElementById('result');
     
-    // 1. Обработка на хотели
+    // 1. Поправка на Хотелите (Карти)
     const hotelMatches = [...md.matchAll(/H: (.*?) \| (.*?) \| (https.*?)\n/g)];
     let hotelsHtml = hotelMatches.map(m => `
-        <div class="bg-blue-50/50 p-4 rounded-2xl flex justify-between items-center border border-blue-100 shadow-sm">
-            <div><p class="text-[9px] font-black text-blue-500 uppercase">${m[1]}</p><p class="font-bold text-slate-800 text-xs">${m[2]}</p></div>
-            <a href="${m[3]}" target="_blank" rel="noopener" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase shadow-lg">Резервирай</a>
+        <div class="bg-white p-5 rounded-3xl flex justify-between items-center border border-slate-100 shadow-sm hover:shadow-md transition">
+            <div><p class="text-[10px] font-black text-blue-600 uppercase mb-1">${m[1]}</p><p class="font-bold text-slate-800 text-sm">${m[2]}</p></div>
+            <a href="${m[3]}" target="_blank" rel="noopener noreferrer" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase">Резервирай</a>
         </div>`).join('');
 
-    // 2. Обработка на програмата
+    // 2. Поправка на Програмата (Бели карти)
     let formatted = md
-        .replace(/### (.*)/g, '<div class="text-2xl font-black text-slate-900 border-b-4 border-blue-600 mt-12 mb-6 uppercase italic pb-2">$1</div>')
+        .replace(/### (.*)/g, '<div class="text-3xl font-black text-slate-900 border-b-8 border-blue-600/20 mt-16 mb-8 uppercase italic pb-2">$1</div>')
         .replace(/ITEM: (.*?) \| (.*?) \| (.*?) \| (https.*?)/g, `
-            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 mb-4 flex justify-between items-center group hover:shadow-md transition">
-                <div class="flex gap-4 items-start">
-                    <span class="text-3xl">$1</span>
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-50 mb-6 flex justify-between items-center group transition hover:border-blue-200">
+                <div class="flex gap-6 items-start">
+                    <span class="text-4xl mt-1">$1</span>
                     <div>
-                        <b class="text-slate-900 font-bold text-lg block">$2</b>
-                        <p class="text-slate-500 text-xs leading-relaxed mt-1 italic">$3</p>
+                        <b class="text-slate-900 font-extrabold text-xl block mb-2 tracking-tight">$2</b>
+                        <p class="text-slate-500 text-sm leading-relaxed max-w-xl">$3</p>
                     </div>
                 </div>
-                <a href="$4" target="_blank" rel="noopener" class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-blue-600 transition"><i class="fas fa-map-marker-alt"></i></a>
+                <a href="$4" target="_blank" rel="noopener noreferrer" class="w-14 h-14 bg-blue-600 text-white rounded-full flex items-center justify-center flex-shrink-0 shadow-lg group-hover:bg-slate-900 transition"><i class="fas fa-map-marker-alt text-xl"></i></a>
             </div>
         `);
 
     res.innerHTML = `
-        <div id="pdfArea" class="max-w-4xl mx-auto pb-20">
-            <div class="bg-slate-900 p-10 rounded-[3rem] text-white mb-8 flex justify-between items-center shadow-2xl border-b-8 border-blue-600">
-                <div><h2 class="text-5xl font-black italic uppercase">${dest}</h2><p class="text-[10px] opacity-50 tracking-[0.3em]">PREMIUM TRAVEL GUIDE</p></div>
-                <div class="flex gap-2">
-                    <button onclick="saveToCloud('${dest}')" class="bg-emerald-500 text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase shadow-lg">ЗАПАЗИ</button>
-                    <button onclick="saveToPDF('${dest}')" class="bg-blue-600 text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase shadow-lg">PDF</button>
+        <div id="pdfArea" class="max-w-5xl mx-auto pb-24 bg-slate-50/50 p-4 md:p-8 rounded-[4rem]">
+            <div class="bg-slate-900 p-12 rounded-[3.5rem] text-white mb-12 flex justify-between items-center shadow-2xl border-b-[12px] border-blue-600">
+                <div><h2 class="text-6xl font-black italic uppercase tracking-tighter">${dest}</h2><p class="text-xs opacity-50 tracking-[0.4em] mt-2 font-light">EXCLUSIVELY BY ITINERFLAI</p></div>
+                <div class="flex gap-3">
+                    <button onclick="saveToCloud('${dest}')" class="bg-emerald-500 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase shadow-xl hover:scale-105 transition">Запази</button>
+                    <button onclick="saveToPDF('${dest}')" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase shadow-xl hover:scale-105 transition">PDF</button>
                 </div>
             </div>
 
-            <div class="mb-10">
-                <h4 class="text-[12px] font-black text-slate-400 mb-4 uppercase tracking-widest flex items-center gap-2"><i class="fas fa-hotel"></i> Препоръчани Хотели</h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${hotelsHtml}</div>
+            <div class="mb-16 px-4">
+                <h4 class="text-sm font-black text-slate-400 mb-6 uppercase tracking-[0.3em] flex items-center gap-3"><i class="fas fa-hotel text-blue-500"></i> ПРЕПОРЪЧАНО НАСТАНЯВАНЕ (ID: 701816)</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">${hotelsHtml}</div>
             </div>
 
-            <div class="space-y-4">${formatted.substring(formatted.indexOf('<div class="text-2xl'))}</div>
+            <div class="px-4">${formatted.substring(formatted.indexOf('<div class="text-3xl'))}</div>
         </div>`;
     
     res.classList.remove('hidden');
@@ -137,7 +136,7 @@ function renderUI(dest, md) {
 
 window.saveToPDF = function(n) {
     const el = document.getElementById('pdfArea');
-    html2pdf().set({ margin: 10, filename: n+'.pdf', html2canvas: { scale: 2 }, jsPDF: { format: 'a4' } }).from(el).save();
+    html2pdf().set({ margin: 10, filename: n+'.pdf', html2canvas: { scale: 3 }, jsPDF: { format: 'a4' } }).from(el).save();
 };
 
 async function saveToCloud(dest) {
@@ -145,7 +144,7 @@ async function saveToCloud(dest) {
     if (!user) return alert("Влезте в профила!");
     const content = document.getElementById('pdfArea').innerHTML;
     await sbClient.from('itineraries').insert([{ user_id: user.id, destination: dest, content }]);
-    alert("Запазено! ✨");
+    alert("Успешно запазено в твоя профил! ✨");
 }
 
 document.addEventListener('DOMContentLoaded', () => {
