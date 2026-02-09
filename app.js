@@ -9,8 +9,9 @@ async function init() {
             sbClient = window.supabase.createClient(S_URL, S_KEY);
             setupAuth();
             checkUser();
+            loadUserItineraries(); // Зареждаме запазените програми при старт
         }
-    } catch (e) { console.error("Грешка:", e); }
+    } catch (e) { console.error("Грешка при инит:", e); }
 }
 init();
 
@@ -40,8 +41,62 @@ async function checkUser() {
                 <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">${user.email}</span>
                 <button onclick="sbClient.auth.signOut().then(() => location.reload())" class="text-white hover:text-red-500 transition px-2"><i class="fas fa-sign-out-alt"></i></button>
             </div>`;
+        loadUserItineraries();
     }
 }
+
+// ФУНКЦИЯ ЗА ЗАРЕЖДАНЕ НА ЗАПАЗЕНИТЕ ПРОГРАМИ (SELECT)
+async function loadUserItineraries() {
+    const { data: { user } } = await sbClient.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await sbClient
+        .from('itineraries')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    const container = document.getElementById('savedItineraries');
+    if (!container) return;
+
+    if (error) {
+        container.innerHTML = `<p class="text-red-400 text-xs">Грешка при зареждане.</p>`;
+        return;
+    }
+
+    if (data.length === 0) {
+        container.innerHTML = `<p class="text-slate-500 text-xs uppercase font-bold italic">Нямате запазени програми.</p>`;
+        return;
+    }
+
+    container.innerHTML = data.map(item => `
+        <div class="bg-white/5 border border-white/10 p-4 rounded-2xl mb-3 flex justify-between items-center group">
+            <div>
+                <h5 class="text-white font-bold text-sm uppercase tracking-tight">${item.destination}</h5>
+                <p class="text-[9px] text-slate-500">${new Date(item.created_at).toLocaleDateString('bg-BG')}</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="viewSaved('${item.id}')" class="bg-blue-600 text-white p-2 px-4 rounded-lg text-[10px] font-bold uppercase hover:bg-blue-500 transition">Преглед</button>
+                <button onclick="deleteSaved('${item.id}')" class="bg-red-500/20 text-red-400 p-2 px-3 rounded-lg text-[10px] hover:bg-red-500 hover:text-white transition"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>
+    `).join('');
+}
+
+window.viewSaved = async (id) => {
+    const { data, error } = await sbClient.from('itineraries').select('*').eq('id', id).single();
+    if (data) {
+        const res = document.getElementById('result');
+        res.innerHTML = data.content;
+        res.classList.remove('hidden');
+        res.scrollIntoView({ behavior: 'smooth' });
+    }
+};
+
+window.deleteSaved = async (id) => {
+    if (!confirm("Сигурни ли сте, че искате да изтриете тази програма?")) return;
+    await sbClient.from('itineraries').delete().eq('id', id);
+    loadUserItineraries();
+};
 
 async function generatePlan(e) {
     e.preventDefault();
@@ -52,16 +107,16 @@ async function generatePlan(e) {
     document.getElementById('loader').classList.remove('hidden');
     document.getElementById('result').classList.add('hidden');
 
-    const prompt = `Направи премиум план за ${dest} за ${days} дни на БЪЛГАРСКИ. БЕЗ СИМВОЛИ # ИЛИ *. 
-    1. ХОТЕЛИ: Дай точно 4 реда: "ХОТЕЛ: [Име]".
-    2. ПРОГРАМА: Всеки ден ЗАДЪЛЖИТЕЛНО започва с "ДЕН: [Номер]".
-    За всеки ден дай на отделни редове (с емоджи и описание):
-    ☕ [Закуска] - [Описание]
-    🏛️ [Обект 1] - [Описание]
-    🏛️ [Обект 2] - [Описание]
-    🍴 [Обяд] - [Описание]
-    📸 [Обект 3] - [Описание]
-    🌙 [Вечеря] - [Описание]`;
+    const prompt = `Направи елитен план за ${dest} за ${days} дни на БЪЛГАРСКИ. БЕЗ СИМВОЛИ # ИЛИ *. 
+    ХОТЕЛ: [Име] (Дай 4 такива в началото)
+    ДЕН: [Номер]
+    ☕ ЗАКУСКА: [Име] - [Описание]
+    🏛️ [Име] - [Описание]
+    🏛️ [Име] - [Описание]
+    🍴 ОБЯД: [Име] - [Описание]
+    📸 [Име] - [Описание]
+    📸 [Име] - [Описание]
+    🌙 ВЕЧЕРЯ: [Име] - [Описание]`;
 
     try {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -69,7 +124,7 @@ async function generatePlan(e) {
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${O_KEY}` },
             body: JSON.stringify({
                 model: "gpt-4o",
-                messages: [{role: "system", content: "Ти си премиум гид. Всеки обект на нов ред с емоджи, име и описание."}, {role: "user", content: prompt}]
+                messages: [{role: "system", content: "Ти си професионален гид. Всеки обект на нов ред с емоджи и описание след тире."}, {role: "user", content: prompt}]
             })
         });
         const data = await response.json();
@@ -95,8 +150,8 @@ function renderUI(dest, md) {
             const hotelUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest + " " + name)}&aid=701816`;
             hotelsHtml += `
             <div class="bg-white p-4 rounded-2xl flex justify-between items-center border border-slate-100 shadow-sm">
-                <div><p class="text-[8px] font-black text-blue-600 uppercase mb-0.5">Хотел</p><p class="font-bold text-slate-800 text-[11px]">${name}</p></div>
-                <a href="${hotelUrl}" target="_blank" class="bg-blue-600 text-white px-3 py-1.5 rounded-xl text-[9px] font-black uppercase shadow-md">Резервирай</a>
+                <div><p class="text-[8px] font-black text-blue-600 uppercase mb-0.5">Настаняване</p><p class="font-bold text-slate-800 text-[11px] leading-tight">${name}</p></div>
+                <a href="${hotelUrl}" target="_blank" class="bg-blue-600 text-white px-3 py-1.5 rounded-xl text-[9px] font-black uppercase shadow-md flex-shrink-0">Резервирай</a>
             </div>`;
             hCount++;
         }
@@ -104,22 +159,21 @@ function renderUI(dest, md) {
             programHtml += `<div class="text-2xl font-black text-slate-900 border-b-4 border-blue-600/20 mt-10 mb-6 uppercase italic pb-1">${l}</div>`;
         }
         else if (/[\u{1F300}-\u{1F9FF}]/u.test(l)) {
-            const separator = l.includes(' - ') ? ' - ' : ':';
-            const parts = l.split(separator);
-            const titleWithEmoji = parts[0].trim();
-            const desc = parts.slice(1).join(separator).trim();
-            const cleanTitle = titleWithEmoji.replace(/[\u{1F300}-\u{1F9FF}]/u, '').trim();
+            const parts = l.split('-');
+            const title = parts[0].trim();
+            const desc = parts[1] ? parts[1].trim() : "";
+            const cleanTitle = title.replace(/[\u{1F300}-\u{1F9FF}]/u, '').trim();
             
-            // НОВ ЛИНК КЪМ GOOGLE MAPS
+            // КОРЕКТЕН GOOGLE MAPS ЛИНК
             const gMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest + " " + cleanTitle)}`;
             
             programHtml += `
-            <div class="bg-white p-6 rounded-[2.5rem] shadow-md border border-slate-50 mb-4 flex justify-between items-center group" style="page-break-inside: avoid;">
+            <div class="bg-white p-5 rounded-[2.5rem] shadow-md border border-slate-50 mb-4 flex justify-between items-center group transition hover:border-blue-200" style="page-break-inside: avoid;">
                 <div class="flex flex-col pr-4">
-                    <b class="text-slate-900 font-extrabold text-base block mb-1">${titleWithEmoji}</b>
-                    <p class="text-slate-500 text-[11px] leading-relaxed line-clamp-3">${desc}</p>
+                    <b class="text-slate-900 font-extrabold text-base block mb-0.5 tracking-tight">${title}</b>
+                    <p class="text-slate-500 text-[11px] leading-relaxed line-clamp-2">${desc}</p>
                 </div>
-                <a href="${gMapsUrl}" target="_blank" class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-blue-600 transition shadow-lg">
+                <a href="${gMapsUrl}" target="_blank" class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center flex-shrink-0 shadow-lg group-hover:bg-blue-600 transition">
                     <i class="fas fa-map-marker-alt text-sm"></i>
                 </a>
             </div>`;
@@ -127,16 +181,16 @@ function renderUI(dest, md) {
     });
 
     res.innerHTML = `
-        <div id="pdfArea" class="max-w-4xl mx-auto p-4 md:p-10 bg-white">
-            <div class="bg-slate-900 p-8 rounded-[2.5rem] text-white mb-10 flex justify-between items-center border-b-8 border-blue-600">
-                <div><h2 class="text-3xl font-black italic uppercase tracking-tighter">${dest}</h2><p class="text-[9px] opacity-50 uppercase tracking-widest font-bold">Premium Itinerary</p></div>
+        <div id="pdfArea" class="max-w-5xl mx-auto pb-24 bg-white p-4 md:p-8 rounded-[4rem]">
+            <div class="bg-slate-900 p-8 rounded-[2.5rem] text-white mb-10 flex justify-between items-center shadow-xl border-b-[8px] border-blue-600">
+                <div><h2 class="text-3xl font-black italic uppercase tracking-tighter">${dest}</h2><p class="text-[9px] opacity-50 tracking-[0.3em] font-light">PREMIUM GUIDE</p></div>
                 <div class="flex gap-2" data-html2canvas-ignore="true">
                     <button onclick="saveToCloud('${dest}')" class="bg-emerald-500 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase shadow-lg">Запази</button>
                     <button onclick="saveToPDF('${dest}')" class="bg-blue-600 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase shadow-lg">PDF</button>
                 </div>
             </div>
             <div class="mb-10 px-2">
-                <h4 class="text-[10px] font-black text-slate-400 mb-4 uppercase border-l-4 border-blue-500 pl-3 italic">НАСТАНЯВАНЕ</h4>
+                <h4 class="text-[10px] font-black text-slate-400 mb-4 uppercase tracking-[0.2em] italic border-l-4 border-blue-500 pl-3">НАСТАНЯВАНЕ</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">${hotelsHtml}</div>
             </div>
             <div class="px-2">${programHtml}</div>
@@ -147,37 +201,18 @@ function renderUI(dest, md) {
 
 window.saveToPDF = function(n) {
     const el = document.getElementById('pdfArea');
-    const opt = { 
-        margin: [10, 5, 10, 5], 
-        filename: n + '.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-    html2pdf().set(opt).from(el).save();
+    html2pdf().set({ margin: 10, filename: n+'.pdf', html2canvas: { scale: 3, scrollY: 0 }, jsPDF: { format: 'a4' } }).from(el).save();
 };
 
 async function saveToCloud(dest) {
     const { data: { user } } = await sbClient.auth.getUser();
     if (!user) return alert("Моля, влезте в профила!");
-    
-    // Вземаме съдържанието
-    const contentHtml = document.getElementById('pdfArea').innerHTML;
-    
-    // Директен запис с await
-    const { error } = await sbClient
-        .from('itineraries')
-        .insert([{ 
-            user_id: user.id, 
-            destination: dest, 
-            content: contentHtml 
-        }]);
-
-    if (error) {
-        console.error("Грешка:", error);
-        alert("Грешка при запис: " + error.message);
-    } else {
+    const content = document.getElementById('pdfArea').innerHTML;
+    const { error } = await sbClient.from('itineraries').insert([{ user_id: user.id, destination: dest, content: content }]);
+    if (error) alert("Грешка при запис!");
+    else {
         alert("Програмата е запазена успешно! ✨");
+        loadUserItineraries(); // Обновяваме списъка веднага
     }
 }
 
