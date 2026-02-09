@@ -75,6 +75,7 @@ function setupAuth() {
 async function checkUser() {
     const { data: { user } } = await sbClient.auth.getUser();
     const statusDiv = document.getElementById('userStatus');
+    const benefitsBox = document.getElementById('benefitsBox');
     
     if (user && statusDiv) {
         statusDiv.innerHTML = `
@@ -84,7 +85,14 @@ async function checkUser() {
                     <i class="fas fa-sign-out-alt"></i>
                 </button>
             </div>`;
+        
+        // Скриване на benefitsBox при влязъл потребител
+        if (benefitsBox) benefitsBox.classList.add('hidden');
+        
         loadUserItineraries(); 
+    } else {
+        // Показване на benefitsBox при невлязъл потребител
+        if (benefitsBox) benefitsBox.classList.remove('hidden');
     }
 }
 
@@ -105,13 +113,18 @@ async function loadUserItineraries() {
 
     if (data && data.length > 0) {
         container.innerHTML = data.map(item => `
-            <div class="bg-slate-900/50 border border-slate-800 p-4 rounded-2xl mb-3 flex justify-between items-center group">
-                <div>
-                    <h5 class="text-white font-bold text-sm uppercase tracking-tight">${item.destination}</h5>
-                    <p class="text-[9px] text-slate-500">${new Date(item.created_at).toLocaleDateString('bg-BG')}</p>
+            <div class="bg-slate-900/50 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between group hover:border-blue-500 transition h-full">
+                <div class="mb-4">
+                    <h5 class="text-white font-bold text-base uppercase tracking-tight mb-2">${item.destination}</h5>
+                    <p class="text-[9px] text-slate-500">
+                        <i class="fas fa-calendar-alt mr-1"></i>
+                        ${new Date(item.created_at).toLocaleDateString('bg-BG')}
+                    </p>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="viewSaved('${item.id}')" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-blue-500 transition">Преглед</button>
+                    <button onclick="viewSaved('${item.id}')" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-blue-500 transition">
+                        <i class="fas fa-eye mr-1"></i> Преглед
+                    </button>
                     <button onclick="deleteSaved('${item.id}')" class="bg-red-500/20 text-red-400 p-2 px-3 rounded-xl text-[10px] hover:bg-red-500 hover:text-white transition">
                         <i class="fas fa-trash"></i>
                     </button>
@@ -119,7 +132,7 @@ async function loadUserItineraries() {
             </div>
         `).join('');
     } else {
-        container.innerHTML = `<p class="text-slate-600 text-[10px] uppercase font-bold italic tracking-widest">Нямате запазени планове.</p>`;
+        container.innerHTML = `<p class="text-slate-600 text-[10px] uppercase font-bold italic tracking-widest col-span-full">Нямате запазени планове.</p>`;
     }
 }
 
@@ -262,16 +275,63 @@ function renderUI(dest, md) {
 /**
  * ЕКСПОРТ И ЗАПИС
  */
-window.saveToPDF = function(n) {
+window.saveToPDF = async function(n) {
     const el = document.getElementById('pdfArea');
-    const opt = {
-        margin: 10,
-        filename: n + '.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, scrollY: 0, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-    html2pdf().set(opt).from(el).save();
+    if (!el) {
+        alert('Грешка: Не може да се намери програмата за експорт!');
+        return;
+    }
+    
+    // Показване на loading индикатор
+    const loadingDiv = document.createElement('div');
+    loadingDiv.id = 'pdfLoading';
+    loadingDiv.innerHTML = `
+        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+            <div style="background: white; padding: 30px; border-radius: 20px; text-align: center;">
+                <div style="width: 50px; height: 50px; border: 5px solid #3b82f6; border-top-color: transparent; border-radius: 50%; margin: 0 auto 20px; animation: spin 1s linear infinite;"></div>
+                <p style="color: #1e293b; font-weight: bold; font-size: 14px;">Генериране на PDF...</p>
+            </div>
+        </div>
+        <style>
+            @keyframes spin { to { transform: rotate(360deg); } }
+        </style>
+    `;
+    document.body.appendChild(loadingDiv);
+    
+    try {
+        const opt = {
+            margin: [15, 10, 15, 10],
+            filename: n + '_itinerary.pdf',
+            image: { type: 'jpeg', quality: 0.95 },
+            html2canvas: { 
+                scale: 2, 
+                useCORS: true,
+                logging: false,
+                scrollY: -window.scrollY,
+                windowWidth: el.scrollWidth,
+                windowHeight: el.scrollHeight
+            },
+            jsPDF: { 
+                unit: 'mm', 
+                format: 'a4', 
+                orientation: 'portrait',
+                compress: true
+            },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        };
+        
+        await html2pdf().set(opt).from(el).save();
+        
+        // Премахване на loading индикатор
+        setTimeout(() => {
+            document.getElementById('pdfLoading')?.remove();
+        }, 500);
+        
+    } catch (error) {
+        console.error('PDF грешка:', error);
+        alert('Възникна грешка при генерирането на PDF файла!');
+        document.getElementById('pdfLoading')?.remove();
+    }
 };
 
 async function saveToCloud(dest) {
