@@ -3,162 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ITINERFLAI - Вашият AI Травъл Архитект</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <title>Travel AI - Premium Planner</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <link rel="stylesheet" href="style.css">
-    
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="app.js"></script>
-</head>
-<body>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <nav class="bg-white/90 backdrop-blur-md p-5 sticky top-0 z-50 border-b">
-        <div class="container mx-auto grid grid-cols-3 items-center px-6">
-            <div class="flex items-center gap-2">
-                <select id="langSwitch" onchange="updateLang()" class="bg-slate-100 text-[10px] font-black uppercase px-3 py-2 rounded-lg outline-none cursor-pointer">
-                    <option value="bg">BG</option>
-                    <option value="en">EN</option>
-                </select>
-            </div>
-            <div class="text-center">
-                <h1 class="text-2xl font-black italic tracking-tighter flex items-center justify-center gap-2 cursor-pointer" onclick="location.reload()">
-                    <div class="bg-blue-600 text-white w-10 h-10 flex items-center justify-center rounded-xl shadow-lg"><i class="fas fa-bolt"></i></div>
-                    ITINER<span class="text-blue-600">FLAI</span>
-                </h1>
-            </div>
-            <div id="userStatus" class="flex justify-end">
-                <button data-lang="loginBtn" onclick="document.getElementById('authModal').classList.remove('hidden')" class="bg-slate-900 text-white px-8 py-3 rounded-2xl text-[10px] font-black uppercase shadow-xl hover:bg-blue-600 transition">Влез / Регистрация</button>
-            </div>
+    <style>
+        body { font-family: 'Montserrat', sans-serif; background-color: #0f172a; color: white; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
+    </style>
+</head>
+<body class="min-h-screen pb-20">
+
+    <nav class="p-6 flex justify-between items-center max-w-6xl mx-auto">
+        <div class="text-2xl font-black italic tracking-tighter uppercase">Travel<span class="text-blue-600">AI</span></div>
+        <div id="userStatus">
+            <button onclick="document.getElementById('authModal').classList.remove('hidden')" class="bg-blue-600 px-6 py-2 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-blue-500 transition">Вход</button>
         </div>
     </nav>
 
-    <header class="hero-gradient text-white py-24 relative text-center">
-        <div class="container mx-auto px-6 relative z-10">
-            <h2 class="text-5xl md:text-7xl font-black italic uppercase mb-6 tracking-tighter">
-                <span data-lang="heroTitle">Твоят личен</span> <br>
-                <span class="text-blue-500 underline decoration-white/20" data-lang="heroSub">AI Архитект</span>
-            </h2>
+    <main class="max-w-4xl mx-auto mt-12 px-6">
+        <div class="glass p-8 md:p-12 rounded-[3rem] shadow-2xl text-center">
+            <h1 class="text-4xl md:text-5xl font-black mb-4 uppercase italic tracking-tighter">Планувай следващото <span class="text-blue-500">приключение</span></h1>
+            <p class="text-slate-400 text-sm mb-10 font-light">Персонализиран премиум маршрут за секунди</p>
             
-            <p data-lang="heroSlogan" class="text-slate-400 text-lg md:text-xl font-medium mb-12 max-w-2xl mx-auto leading-relaxed italic">
-                Открийте скритите съкровища на всяка дестинация с персонализиран маршрут, създаден за секунди.
-            </p>
-
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto opacity-60">
-                <div class="bg-white/5 backdrop-blur-md p-6 rounded-3xl border border-white/10 italic text-[10px] font-black uppercase">
-                    <i class="fas fa-hotel text-blue-500 text-2xl mb-3 block"></i> <span data-lang="iconHotels">Хотели</span>
-                </div>
-                <div class="bg-white/5 backdrop-blur-md p-6 rounded-3xl border border-white/10 italic text-[10px] font-black uppercase">
-                    <i class="fas fa-utensils text-emerald-500 text-2xl mb-3 block"></i> <span data-lang="iconFood">Гурме</span>
-                </div>
-                <div class="bg-white/5 backdrop-blur-md p-6 rounded-3xl border border-white/10 italic text-[10px] font-black uppercase">
-                    <i class="fas fa-map-marked-alt text-orange-500 text-2xl mb-3 block"></i> <span data-lang="iconMap">Програма</span>
-                </div>
-                <div class="bg-white/5 backdrop-blur-md p-6 rounded-3xl border border-white/10 italic text-[10px] font-black uppercase">
-                    <i class="fas fa-shield-halved text-purple-500 text-2xl mb-3 block"></i> <span data-lang="iconSmart">Смарт</span>
-                </div>
-            </div>
+            <form id="planForm" class="flex flex-col md:flex-row gap-4">
+                <input type="text" id="destination" placeholder="Град / Държава" required 
+                    class="flex-1 bg-slate-800/50 border border-slate-700 p-4 rounded-2xl focus:outline-none focus:border-blue-500 transition text-white">
+                <input type="number" id="days" placeholder="Дни" min="1" max="14" required 
+                    class="w-full md:w-24 bg-slate-800/50 border border-slate-700 p-4 rounded-2xl focus:outline-none focus:border-blue-500 transition text-white">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-black px-10 py-4 rounded-2xl uppercase text-sm tracking-widest transition shadow-lg shadow-blue-900/40">
+                    Генерирай
+                </button>
+            </form>
         </div>
-    </header>
 
-    <main class="container mx-auto p-6 md:p-12 -mt-20 relative z-20">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+        <div id="loader" class="hidden mt-20 text-center">
+            <div class="inline-block w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <p class="mt-4 text-slate-500 font-bold uppercase text-[10px] tracking-[0.3em]">Изкуственият интелект създава вашия план...</p>
+        </div>
+
+        <div id="placeholder" class="mt-20 text-center opacity-20">
+            <i class="fas fa-map-marked-alt text-8xl mb-4"></i>
+            <p class="uppercase font-black italic tracking-widest">Готови ли сте за път?</p>
+        </div>
+
+        <div id="result" class="hidden mt-12 transition-all duration-700">
+            </div>
+
+        <div class="mt-24 border-t border-slate-800 pt-16">
+            <div class="flex items-center gap-4 mb-8">
+                <div class="h-1 w-12 bg-blue-600 rounded-full"></div>
+                <h3 class="text-xl font-black uppercase italic tracking-widest">Моите запазени планове</h3>
+            </div>
             
-            <div class="lg:col-span-4">
-                <div class="bg-white p-10 rounded-[3.5rem] card-shadow border border-slate-100 sticky top-32">
-                    <h3 data-lang="paramsTitle" class="text-[11px] font-black uppercase mb-8 border-b pb-4 text-slate-400 tracking-[0.2em] italic">Параметри</h3>
-                    
-                   <form id="planForm" class="space-y-5">
-                        <div class="space-y-1">
-                            <label data-lang="labelDest" class="text-[9px] font-black uppercase text-slate-400 ml-4">Дестинация</label>
-                            <input type="text" id="destination" required placeholder="Напр. Париж, Франция" class="w-full px-6 py-5 rounded-2xl border border-slate-200 text-sm bg-slate-50 outline-none">
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label data-lang="labelStyle" class="text-[9px] font-black uppercase text-slate-400 ml-4">Стил</label>
-                                <select id="travelStyle" class="w-full px-5 py-5 rounded-2xl border border-slate-200 bg-slate-50 text-[10px] font-black uppercase">
-                                    <option value="balanced">Балансиран</option>
-                                    <option value="luxury">Луксозен</option>
-                                    <option value="budget">Бюджетен</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label data-lang="labelDate" class="text-[9px] font-black uppercase text-slate-400 ml-4">Дата</label>
-                                <input type="date" id="startDate" class="w-full px-4 py-5 rounded-2xl border border-slate-200 text-[11px] font-bold bg-slate-50 outline-none">
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label data-lang="labelDays" class="text-[9px] font-black uppercase text-slate-400 ml-4">Дни</label>
-                                <input type="number" id="days" value="3" class="w-full px-6 py-5 rounded-2xl border border-slate-200 text-sm font-black bg-slate-50">
-                            </div>
-                            <div>
-                                <label data-lang="labelTravelers" class="text-[9px] font-black uppercase text-slate-400 ml-4">Пътници</label>
-                                <input type="number" id="travelers" value="2" class="w-full px-6 py-5 rounded-2xl border border-slate-200 text-sm font-black bg-slate-50">
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label data-lang="labelBudget" class="text-[9px] font-black uppercase text-slate-400 ml-4">Бюджет</label>
-                                <input type="number" id="budget" value="1000" class="w-full px-6 py-5 rounded-2xl border border-slate-200 text-sm font-black bg-slate-50">
-                            </div>
-                            <div>
-                                <label data-lang="labelCurrency" class="text-[9px] font-black uppercase text-slate-400 ml-4">Валута</label>
-                                <select id="currency" class="w-full px-5 py-5 rounded-2xl border border-slate-200 bg-slate-50 text-[10px] font-black uppercase">
-                                    <option value="EUR">EUR (€)</option>
-                                    <option value="BGN">BGN (лв)</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <button type="submit" data-lang="createBtn" class="w-full bg-blue-600 text-white font-black py-6 rounded-2xl uppercase text-[11px] tracking-widest mt-4 shadow-xl hover:bg-slate-900 transition">Създай План <i class="fas fa-chevron-right ml-2"></i></button>
-                    </form>
-
-                    <div class="mt-10 p-8 bg-slate-900 rounded-[2.5rem] text-white">
-                        <h4 class="text-[10px] font-black uppercase text-blue-400 mb-5 border-b border-white/10 pb-2 italic">
-                            <span data-lang="benefitsTitle">Предимства</span> (само за регистрирани):
-                        </h4>
-                        <ul class="space-y-4">
-                            <li class="flex items-center gap-3 text-[10px] font-bold uppercase"><i class="fas fa-file-pdf text-red-500"></i> <span data-lang="benPdf">PDF Експорт</span></li>
-                            <li class="flex items-center gap-3 text-[10px] font-bold uppercase"><i class="fas fa-share-nodes text-blue-500"></i> <span data-lang="benShare">FB, X & WhatsApp</span></li>
-                            <li class="flex items-center gap-3 text-[10px] font-bold uppercase"><i class="fas fa-cloud text-emerald-500"></i> <span data-lang="benCloud">Облачен архив</span></li>
-                        </ul>
-                    </div>
-                </div>
+            <div id="savedItineraries" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <p class="text-slate-600 text-[10px] font-bold uppercase italic">Влезте, за да видите вашите планове.</p>
             </div>
-
-            <div class="lg:col-span-8">
-                <div id="placeholder" class="py-44 text-center bg-white rounded-[4rem] border-2 border-dashed border-slate-100">
-                    <h3 data-lang="placeholderTxt" class="text-2xl font-black italic text-slate-300 uppercase">Очакваме дестинация...</h3>
-                </div>
-                <div id="loader" class="hidden py-44 text-center">
-                    <div class="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent mx-auto"></div>
-                </div>
-                <div id="result" class="hidden"></div>
-            </div>
-
         </div>
     </main>
 
-    <div id="authModal" class="hidden fixed inset-0 bg-slate-900/95 backdrop-blur-md z-[100] flex items-center justify-center p-6">
-        <div class="bg-white rounded-[3.5rem] p-12 max-w-md w-full text-center relative card-shadow">
-            <h2 id="authTitle" class="text-3xl font-black uppercase mb-8 text-slate-800 italic" data-lang="modalTitle">Вход</h2>
+    <div id="authModal" class="hidden fixed inset-0 bg-slate-950/90 flex items-center justify-center p-6 z-50 backdrop-blur-sm">
+        <div class="glass w-full max-w-md p-10 rounded-[2.5rem] relative shadow-2xl">
+            <button onclick="document.getElementById('authModal').classList.add('hidden')" class="absolute top-6 right-6 text-slate-500 hover:text-white"><i class="fas fa-times"></i></button>
+            <h2 id="authTitle" class="text-2xl font-black uppercase italic mb-8">Влез в профила</h2>
             <div class="space-y-4">
-                <input type="email" id="authEmail" placeholder="Email" class="w-full rounded-2xl border p-5 bg-slate-50 outline-none">
-                <input type="password" id="authPassword" placeholder="Парола" class="w-full rounded-2xl border p-5 bg-slate-50 outline-none">
-                <button type="button" id="realSubmitBtn" class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl uppercase text-xs shadow-xl hover:bg-slate-900 transition">Продължи</button>
-                <button type="button" id="toggleBtn" class="text-slate-400 font-black text-[10px] uppercase mt-6 block mx-auto underline" data-lang="modalToggle">Регистрация</button>
+                <input type="email" id="authEmail" placeholder="Имейл" class="w-full bg-slate-800 border border-slate-700 p-4 rounded-xl focus:outline-none">
+                <input type="password" id="authPassword" placeholder="Парола" class="w-full bg-slate-800 border border-slate-700 p-4 rounded-xl focus:outline-none">
+                <button id="realSubmitBtn" class="w-full bg-blue-600 p-4 rounded-xl font-black uppercase text-sm tracking-widest hover:bg-blue-500 transition">Продължи</button>
+                <p class="text-center text-xs text-slate-500 mt-4 cursor-pointer hover:text-blue-400" onclick="toggleAuthMode()">Нямате профил? Регистрация</p>
             </div>
-            <button onclick="document.getElementById('authModal').classList.add('hidden')" class="absolute top-8 right-8 text-slate-300"><i class="fas fa-times text-xl"></i></button>
         </div>
     </div>
 
+    <script src="app.js"></script>
+
+    <script>
+        // Малка функция за превключване между Вход и Регистрация в модала
+        function toggleAuthMode() {
+            const title = document.getElementById('authTitle');
+            if (title.innerText.includes('ВЛЕЗ')) {
+                title.innerText = 'Регистрация';
+            } else {
+                title.innerText = 'Влез в профила';
+            }
+        }
+    </script>
 </body>
 </html>
