@@ -29,31 +29,47 @@ init();
  * АУТЕНТИКАЦИЯ: Вход и Регистрация
  */
 function setupAuth() {
-    const btn = document.getElementById('realSubmitBtn');
-    if (!btn) return;
+    // Добавяне на функционалност за превключване между вход и регистрация
+    const toggleBtn = document.getElementById('toggleAuthBtn');
+    const mainBtn = document.getElementById('mainAuthBtn');
+    const authTitle = document.getElementById('authTitle');
     
-    btn.onclick = async () => {
-        const email = document.getElementById('authEmail').value;
-        const pass = document.getElementById('authPassword').value;
-        const authTitle = document.getElementById('authTitle').innerText;
-        const isReg = authTitle.includes('Регистрация');
+    if (toggleBtn && mainBtn && authTitle) {
+        toggleBtn.onclick = () => {
+            const isLogin = authTitle.innerText.includes('Вход');
+            if (isLogin) {
+                authTitle.innerText = 'Регистрация';
+                mainBtn.innerText = 'Регистрирай се';
+                toggleBtn.innerText = 'Вече имам профил';
+            } else {
+                authTitle.innerText = 'Вход';
+                mainBtn.innerText = 'Влез';
+                toggleBtn.innerText = 'Регистрация';
+            }
+        };
         
-        try {
-            const { error } = isReg 
-                ? await sbClient.auth.signUp({ email, password: pass })
-                : await sbClient.auth.signInWithPassword({ email, password: pass });
+        mainBtn.onclick = async () => {
+            const email = document.getElementById('authEmail').value;
+            const pass = document.getElementById('authPassword').value;
+            const isReg = authTitle.innerText.includes('Регистрация');
             
-            if (error) throw error;
-            
-            // Скриваме модала при успех
-            const modal = document.getElementById('authModal');
-            if (modal) modal.style.display = 'none'; 
-            
-            checkUser();
-        } catch (err) { 
-            alert(err.message); 
-        }
-    };
+            try {
+                const { error } = isReg 
+                    ? await sbClient.auth.signUp({ email, password: pass })
+                    : await sbClient.auth.signInWithPassword({ email, password: pass });
+                
+                if (error) throw error;
+                
+                // Скриваме модала при успех
+                const modal = document.getElementById('authModal');
+                if (modal) modal.style.display = 'none'; 
+                
+                checkUser();
+            } catch (err) { 
+                alert(err.message); 
+            }
+        };
+    }
 }
 
 async function checkUser() {
@@ -292,3 +308,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
+/**
+ * MODAL ФУНКЦИИ
+ */
+window.openModal = function() {
+    const modal = document.getElementById('authModal');
+    if (modal) modal.style.display = "block";
+};
+
+window.closeModal = function() {
+    const modal = document.getElementById('authModal');
+    if (modal) modal.style.display = "none";
+};
+
+/**
+ * ЕЗИКОВА ФУНКЦИЯ
+ */
+window.setLanguage = function(lang) {
+    // Промяна на активния език
+    document.querySelectorAll('[id^="lang-"]').forEach(btn => {
+        btn.classList.remove('lang-active');
+        btn.classList.add('text-slate-500');
+    });
+    document.getElementById('lang-' + lang).classList.add('lang-active');
+    document.getElementById('lang-' + lang).classList.remove('text-slate-500');
+    
+    // Тук можете да добавите логика за превод
+};
