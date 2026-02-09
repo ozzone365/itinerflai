@@ -313,11 +313,12 @@ function renderUI(dest, days, startDate, budgetAmount, currency, md) {
             const dayNum = l.match(/\d+/)?.[0] || '';
             programHtml += `<div class="text-2xl font-black text-slate-900 border-b-4 border-blue-600/20 mt-10 mb-6 uppercase italic pb-1" style="page-break-before: auto; page-break-after: avoid;">${l}</div>`;
         }
-        else if (/[\u{1F300}-\u{1F9FF}]/u.test(l)) {
+        // Проверка дали редът съдържа емоджи ИЛИ ключови думи (ЗАКУСКА, ОБЯД, ВЕЧЕРЯ)
+        else if (/[\u{1F300}-\u{1F9FF}]/u.test(l) || upper.includes('ЗАКУСКА:') || upper.includes('ОБЯД:') || upper.includes('ВЕЧЕРЯ:')) {
             const parts = l.split('-'); 
             const title = parts[0].trim(); 
             const desc = parts[1] ? parts[1].trim() : "";
-            const cleanTitle = title.replace(/[\u{1F300}-\u{1F9FF}]/u, '').trim();
+            const cleanTitle = title.replace(/[\u{1F300}-\u{1F9FF}]/ug, '').replace(/ЗАКУСКА:|ОБЯД:|ВЕЧЕРЯ:/gi, '').trim();
             
             // Проверка за тип заведение
             const isRestaurant = upper.includes('ЗАКУСКА') || upper.includes('ОБЯД') || upper.includes('ВЕЧЕРЯ');
@@ -372,7 +373,7 @@ function renderUI(dest, days, startDate, budgetAmount, currency, md) {
                             </div>
                             <div class="bg-white/10 backdrop-blur-sm px-3 py-2 rounded-xl border border-white/20">
                                 <i class="fas fa-users text-emerald-400 mr-1"></i>
-                                <span class="font-bold">${budgetAmount || travelers} ${currency ? 'души' : ''}</span>
+                                <span class="font-bold">${travelers} души</span>
                             </div>
                             <div class="bg-white/10 backdrop-blur-sm px-3 py-2 rounded-xl border border-white/20">
                                 <i class="fas fa-wallet text-purple-400 mr-1"></i>
@@ -410,10 +411,10 @@ function renderUI(dest, days, startDate, budgetAmount, currency, md) {
             <div class="mt-16 p-6 bg-slate-50 rounded-2xl text-center border-t-4 border-blue-600" style="page-break-inside: avoid;" data-html2canvas-show="true">
                 <p class="text-[10px] text-slate-600 mb-2">
                     <i class="fas fa-bolt text-blue-600"></i>
-                    Генерирано от <b>ITINERAI</b> - Вашият AI Туристически Архитект
+                    Генерирано от <b>ITINERFLAI</b> - Вашият AI Туристически Архитект
                 </p>
                 <p class="text-[8px] text-slate-400">
-                    itinerai.com | Създадено на ${new Date().toLocaleDateString('bg-BG')}
+                    itinerflai.com | Създадено на ${new Date().toLocaleDateString('bg-BG')}
                 </p>
             </div>
         </div>`;
