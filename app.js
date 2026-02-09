@@ -111,8 +111,8 @@ function renderUI(dest, md) {
             const desc = parts.slice(1).join(separator).trim();
             const cleanTitle = titleWithEmoji.replace(/[\u{1F300}-\u{1F9FF}]/u, '').trim();
             
-            // КОРЕКТЕН ЛИНК (Фикс traffic_source)
-            const tpUrl = `https://wayaway.tp.st/search?marker=701816&query=${encodeURIComponent(dest + " " + cleanTitle)}&subid=itinerflai`;
+            // ФИКСИРАН ЛИНК - директно към търсачката без излишни параметри
+            const tpUrl = `https://www.wayaway.io/search?query=${encodeURIComponent(dest + " " + cleanTitle)}&marker=701816`;
             
             programHtml += `
             <div class="bg-white p-6 rounded-[2.5rem] shadow-md border border-slate-50 mb-4 flex justify-between items-center group">
@@ -128,19 +128,19 @@ function renderUI(dest, md) {
     });
 
     res.innerHTML = `
-        <div id="pdfArea" class="max-w-5xl mx-auto pb-24 p-4 md:p-8 rounded-[4rem] bg-white">
-            <div class="bg-slate-900 p-8 rounded-[2.5rem] text-white mb-10 flex justify-between items-center shadow-xl border-b-[8px] border-blue-600">
-                <div><h2 class="text-3xl font-black italic uppercase tracking-tighter">${dest}</h2><p class="text-[9px] opacity-50 uppercase tracking-widest">Premium Itinerary</p></div>
+        <div id="pdfArea" class="max-w-4xl mx-auto p-8 bg-white" style="border-radius: 0;">
+            <div class="bg-slate-900 p-8 rounded-3xl text-white mb-10 flex justify-between items-center border-b-8 border-blue-600">
+                <div><h2 class="text-3xl font-black italic uppercase italic tracking-tighter">${dest}</h2><p class="text-[9px] opacity-50 uppercase tracking-widest font-bold">Premium Itinerary</p></div>
                 <div class="flex gap-2" data-html2canvas-ignore="true">
-                    <button onclick="saveToCloud('${dest}')" class="bg-emerald-500 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase">Запази</button>
-                    <button onclick="saveToPDF('${dest}')" class="bg-blue-600 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase">PDF</button>
+                    <button onclick="saveToCloud('${dest}')" class="bg-emerald-500 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase shadow-lg">Запази</button>
+                    <button onclick="saveToPDF('${dest}')" class="bg-blue-600 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase shadow-lg">PDF</button>
                 </div>
             </div>
-            <div class="mb-10 px-2">
+            <div class="mb-10">
                 <h4 class="text-[10px] font-black text-slate-400 mb-4 uppercase border-l-4 border-blue-500 pl-3 italic">НАСТАНЯВАНЕ</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">${hotelsHtml}</div>
             </div>
-            <div class="px-2">${programHtml}</div>
+            <div>${programHtml}</div>
         </div>`;
     res.classList.remove('hidden');
     res.scrollIntoView({ behavior: 'smooth' });
@@ -149,10 +149,10 @@ function renderUI(dest, md) {
 window.saveToPDF = function(n) {
     const el = document.getElementById('pdfArea');
     const opt = { 
-        margin: [0, 0, 0, 0], 
-        filename: n+'.pdf', 
+        margin: [10, 10, 10, 10], 
+        filename: n + '_itinerary.pdf',
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+        html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: -window.scrollY },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
     html2pdf().set(opt).from(el).save();
@@ -162,12 +162,10 @@ async function saveToCloud(dest) {
     const { data: { user } } = await sbClient.auth.getUser();
     if (!user) return alert("Моля, влезте в профила!");
     const content = document.getElementById('pdfArea').innerHTML;
-    const { error } = await sbClient.from('itineraries').insert([{ 
-        user_id: user.id, 
-        destination: dest, 
-        content: content 
-    }]);
-    if (error) { console.error(error); alert("Грешка при запис!"); }
+    const { error } = await sbClient.from('itineraries').insert([
+        { user_id: user.id, destination: dest, content: content }
+    ]);
+    if (error) { console.error(error); alert("Грешка при запис в базата!"); }
     else { alert("Програмата е запазена успешно! ✨"); }
 }
 
