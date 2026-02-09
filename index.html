@@ -26,7 +26,7 @@
                 <button onclick="setLanguage('bg')" id="lang-bg" class="px-4 py-1.5 text-[10px] font-bold rounded-md transition lang-active">BG</button>
                 <button onclick="setLanguage('en')" id="lang-en" class="px-4 py-1.5 text-[10px] font-bold rounded-md transition text-slate-500">EN</button>
             </div>
-            <h1 class="text-2xl font-black italic tracking-tighter cursor-pointer" onclick="location.reload()"><i class="fas fa-bolt text-blue-600"></i> ITINER<span class="text-blue-600">AI</span></h1>
+            <h1 class="text-2xl font-black italic tracking-tighter cursor-pointer" onclick="location.reload()"><i class="fas fa-bolt text-blue-600"></i> ITINER<span class="text-blue-600">FLAI</span></h1>
             <div id="userStatus" class="text-xs font-bold">
                 <button onclick="openModal()" data-i18n="login" class="bg-blue-600 text-white px-6 py-2 rounded-full uppercase tracking-widest hover:bg-blue-700 transition">Вход</button>
             </div>
@@ -99,6 +99,55 @@
                             <i class="fas fa-magic mr-2"></i> <span data-i18n="btn-generate">Генерирай</span>
                         </button>
                     </form>
+                    
+                    <!-- Поле с предимства за нерегистрирани потребители -->
+                    <div id="benefitsBox" class="mt-6 bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700 p-6 rounded-[2rem] text-white hidden">
+                        <div class="text-center mb-4">
+                            <div class="inline-block bg-yellow-400 text-blue-900 px-4 py-1 rounded-full mb-3">
+                                <i class="fas fa-crown mr-1"></i>
+                                <span class="text-[9px] font-black uppercase tracking-wider">Premium функции</span>
+                            </div>
+                            <h3 class="text-lg font-black uppercase mb-2">Защо да се регистрирам?</h3>
+                            <p class="text-[10px] text-blue-100 mb-4">Отключи пълния потенциал на ItinerAI</p>
+                        </div>
+                        
+                        <div class="space-y-3 mb-5">
+                            <div class="flex items-start gap-3 bg-white/10 backdrop-blur-sm p-3 rounded-xl border border-white/20">
+                                <div class="w-8 h-8 bg-emerald-400 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-infinity text-white text-sm"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-[11px] uppercase mb-1">Неограничени програми</h4>
+                                    <p class="text-[9px] text-blue-100 leading-relaxed">Създавай колкото искаш пътни планове</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start gap-3 bg-white/10 backdrop-blur-sm p-3 rounded-xl border border-white/20">
+                                <div class="w-8 h-8 bg-blue-400 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-save text-white text-sm"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-[11px] uppercase mb-1">Облачно запазване</h4>
+                                    <p class="text-[9px] text-blue-100 leading-relaxed">Достъп от всяко устройство, по всяко време</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start gap-3 bg-white/10 backdrop-blur-sm p-3 rounded-xl border border-white/20">
+                                <div class="w-8 h-8 bg-purple-400 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-file-pdf text-white text-sm"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-[11px] uppercase mb-1">PDF експорт</h4>
+                                    <p class="text-[9px] text-blue-100 leading-relaxed">Изтегляй и споделяй програмите си</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button onclick="openModal()" class="w-full bg-white text-blue-700 font-black py-4 rounded-xl uppercase text-[11px] shadow-xl hover:bg-blue-50 transition-all">
+                            <i class="fas fa-rocket mr-2"></i> Започни безплатно
+                        </button>
+                        <p class="text-center text-[8px] text-blue-200 mt-2">Без кредитна карта • Регистрация за секунди</p>
+                    </div>
                 </div>
             </div>
 
@@ -127,37 +176,6 @@
         </div>
 
         <section id="myTripsSection" class="mt-20 hidden">
-            <!-- Поле с предимства за нерегистрирани потребители -->
-            <div id="benefitsBox" class="bg-gradient-to-r from-blue-50 to-emerald-50 border-2 border-blue-200 p-8 rounded-3xl mb-8 text-center hidden">
-                <div class="max-w-3xl mx-auto">
-                    <div class="flex items-center justify-center gap-3 mb-4">
-                        <i class="fas fa-star text-yellow-500 text-2xl"></i>
-                        <h3 class="text-2xl font-black uppercase italic text-slate-900">Защо да се регистрирам?</h3>
-                        <i class="fas fa-star text-yellow-500 text-2xl"></i>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                        <div class="bg-white/60 p-4 rounded-2xl">
-                            <i class="fas fa-save text-blue-600 text-3xl mb-2"></i>
-                            <h4 class="font-bold text-sm uppercase text-slate-800 mb-1">Запази програмите</h4>
-                            <p class="text-[10px] text-slate-600">Съхранявай и достъпвай твоите планове по всяко време</p>
-                        </div>
-                        <div class="bg-white/60 p-4 rounded-2xl">
-                            <i class="fas fa-history text-emerald-600 text-3xl mb-2"></i>
-                            <h4 class="font-bold text-sm uppercase text-slate-800 mb-1">История на пътуванията</h4>
-                            <p class="text-[10px] text-slate-600">Преглеждай всички минали програми в един профил</p>
-                        </div>
-                        <div class="bg-white/60 p-4 rounded-2xl">
-                            <i class="fas fa-cloud text-purple-600 text-3xl mb-2"></i>
-                            <h4 class="font-bold text-sm uppercase text-slate-800 mb-1">Облачно съхранение</h4>
-                            <p class="text-[10px] text-slate-600">Достъп от всяко устройство - телефон, таблет, компютър</p>
-                        </div>
-                    </div>
-                    <button onclick="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-black py-4 px-10 rounded-2xl uppercase text-xs shadow-xl transition">
-                        <i class="fas fa-user-plus mr-2"></i> Регистрирай се сега
-                    </button>
-                </div>
-            </div>
-            
             <div class="flex items-center gap-4 mb-10">
                 <h2 class="text-3xl font-black tracking-tighter uppercase italic" data-i18n="my-trips">Моите запазени програми</h2>
                 <div class="h-[1px] flex-grow bg-slate-200"></div>
