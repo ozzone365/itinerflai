@@ -87,7 +87,7 @@ async function checkUser() {
                 </button>
             </div>`;
         
-        // Скриване на benefitsBox при влязъл потребител
+        // Скриване на benefitsBox при влязъл потребител (в sidebar)
         if (benefitsBox) benefitsBox.classList.add('hidden');
         
         // Показване на секцията "Моите запазени програми"
@@ -98,7 +98,7 @@ async function checkUser() {
         
         loadUserItineraries(); 
     } else {
-        // Показване на benefitsBox при невлязъл потребител
+        // Показване на benefitsBox при невлязъл потребител (в sidebar)
         if (benefitsBox) benefitsBox.classList.remove('hidden');
         
         // Скриване на секцията "Моите запазени програми"
@@ -195,6 +195,11 @@ async function generatePlan(e) {
     
     const dest = document.getElementById('destination').value;
     const days = document.getElementById('days').value;
+    const startDate = document.getElementById('startDate').value;
+    const travelStyle = document.getElementById('travelStyle').value;
+    const travelers = document.getElementById('travelers').value;
+    const budgetAmount = document.getElementById('budgetAmount').value;
+    const currency = document.getElementById('currency').value;
     
     const placeholder = document.getElementById('placeholder');
     if (placeholder) placeholder.classList.add('hidden');
@@ -202,16 +207,47 @@ async function generatePlan(e) {
     document.getElementById('loader').classList.remove('hidden');
     document.getElementById('result').classList.add('hidden');
 
-    const prompt = `Направи елитен план за ${dest} за ${days} дни на БЪЛГАРСКИ. БЕЗ СИМВОЛИ # ИЛИ *. 
-    ХОТЕЛ: [Име] (Дай 4 такива в началото)
-    ДЕН: [Номер]
-    ☕ЗАКУСКА: [Име] - [Описание]
-    🏛️ [Име] - [Описание]
-    🏛️ [Име] - [Описание]
-    🍴 ОБЯД: [Име] - [Описание]
-    📸 [Име] - [Описание]
-    📸 [Име] - [Описание]
-    🌙 ВЕЧЕРЯ: [Име] - [Описание]`;
+    // Превод на стиловете
+    const styleMap = {
+        'balanced': 'балансиран (комбинация от забележителности и релакс)',
+        'dynamic': 'динамичен (много активности и забележителности)',
+        'relaxed': 'релаксиращ (повече почивка и спокойни дейности)'
+    };
+    
+    const travelStyleBG = styleMap[travelStyle] || 'балансиран';
+
+    const prompt = `Създай професионален туристически план за ${dest} на БЪЛГАРСКИ език със следните параметри:
+
+📍 Дестинация: ${dest}
+📅 Продължителност: ${days} дни (от ${startDate})
+👥 Брой пътуващи: ${travelers} души
+💰 Бюджет: ${budgetAmount} ${currency} на човек
+🎯 Стил на пътуване: ${travelStyleBG}
+
+СТРУКТУРА (БЕЗ СИМВОЛИ # ИЛИ *):
+
+ХОТЕЛ: [Име на хотел] - [Кратко описание]
+(Предложи 4 различни хотела подходящи за бюджета)
+
+ДЕН 1:
+☕ ЗАКУСКА: [Име на кафене/ресторант] - [Описание и специалитет]
+🏛️ [Забележителност 1] - [Описание]
+🏛️ [Забележителност 2] - [Описание]
+🍴 ОБЯД: [Име на ресторант] - [Описание и препоръчано ястие]
+📸 [Забележителност 3] - [Описание]
+📸 [Забележителност 4] - [Описание]
+🌙 ВЕЧЕРЯ: [Име на ресторант] - [Описание]
+
+(Повтори структурата за всеки ден)
+
+ВАЖНО:
+- Всички заведения да са РЕАЛНИ и съществуващи в ${dest}
+- Всички описания да са конкретни и полезни
+- Съобрази бюджета ${budgetAmount} ${currency} на човек
+- Спазвай стила "${travelStyleBG}"
+- За ${travelers} души
+- Всяко място на НОВА линия
+- Емоджи само в началото на реда`;
 
     try {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -223,13 +259,13 @@ async function generatePlan(e) {
             body: JSON.stringify({
                 model: "gpt-4o",
                 messages: [
-                    {role: "system", content: "Ти си професионален гид. Всеки обект на нов ред с емоджи и описание след тире."},
+                    {role: "system", content: "Ти си експертен туристически гид, който създава детайлни и персонализирани пътни програми. Отговаряй точно по зададената структура, с реални места и конкретни препоръки."},
                     {role: "user", content: prompt}
                 ]
             })
         });
         const data = await response.json();
-        renderUI(dest, data.choices[0].message.content);
+        renderUI(dest, days, startDate, budgetAmount, currency, data.choices[0].message.content);
         
         // Ако потребителят НЕ е влязъл, маркираме че е генерирал програма
         if (!user) {
@@ -245,7 +281,7 @@ async function generatePlan(e) {
 /**
  * UI РЕНДЕРИРАНЕ: Превръщане на текста в HTML карти
  */
-function renderUI(dest, md) {
+function renderUI(dest, days, startDate, budgetAmount, currency, md) {
     const res = document.getElementById('result');
     let hotelsHtml = ""; let programHtml = ""; let hCount = 0;
     
@@ -256,27 +292,44 @@ function renderUI(dest, md) {
         const upper = l.toUpperCase();
         
         if (upper.startsWith('ХОТЕЛ:') && hCount < 4) {
-            const name = l.split(':')[1].trim();
+            const parts = l.split(':')[1].trim().split('-');
+            const name = parts[0].trim();
+            const desc = parts[1] ? parts[1].trim() : "";
             const hotelUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest + " " + name)}&aid=701816`;
             hotelsHtml += `
-                <div class="bg-white p-4 rounded-2xl flex justify-between items-center border border-slate-100 shadow-sm">
-                    <div>
-                        <p class="text-[8px] font-black text-blue-600 uppercase mb-0.5">Настаняване</p>
-                        <p class="font-bold text-slate-800 text-[11px] leading-tight">${name}</p>
+                <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm" style="page-break-inside: avoid;">
+                    <div class="mb-2">
+                        <p class="text-[8px] font-black text-blue-600 uppercase mb-1">Настаняване</p>
+                        <p class="font-bold text-slate-800 text-[12px] leading-tight mb-1">${name}</p>
+                        ${desc ? `<p class="text-[9px] text-slate-500 leading-snug">${desc}</p>` : ''}
                     </div>
-                    <a href="${hotelUrl}" target="_blank" class="bg-blue-600 text-white px-3 py-1.5 rounded-xl text-[9px] font-black uppercase shadow-md flex-shrink-0">Резервирай</a>
+                    <a href="${hotelUrl}" target="_blank" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase shadow-md block text-center hover:bg-blue-700 transition" data-html2canvas-ignore="true">
+                        Резервирай в Booking.com
+                    </a>
                 </div>`;
             hCount++;
         }
-        else if (upper.includes('ДЕН:')) {
-            programHtml += `<div class="text-2xl font-black text-slate-900 border-b-4 border-blue-600/20 mt-10 mb-6 uppercase italic pb-1">${l}</div>`;
+        else if (upper.includes('ДЕН')) {
+            const dayNum = l.match(/\d+/)?.[0] || '';
+            programHtml += `<div class="text-2xl font-black text-slate-900 border-b-4 border-blue-600/20 mt-10 mb-6 uppercase italic pb-1" style="page-break-before: auto; page-break-after: avoid;">${l}</div>`;
         }
         else if (/[\u{1F300}-\u{1F9FF}]/u.test(l)) {
             const parts = l.split('-'); 
             const title = parts[0].trim(); 
             const desc = parts[1] ? parts[1].trim() : "";
             const cleanTitle = title.replace(/[\u{1F300}-\u{1F9FF}]/u, '').trim();
-            const gMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest + " " + cleanTitle)}`;
+            
+            // Проверка за тип заведение
+            const isRestaurant = upper.includes('ЗАКУСКА') || upper.includes('ОБЯД') || upper.includes('ВЕЧЕРЯ');
+            
+            let linkUrl;
+            if (isRestaurant) {
+                // Booking.com линк за ресторанти
+                linkUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest + " " + cleanTitle)}&aid=701816`;
+            } else {
+                // Google Maps за забележителности
+                linkUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest + " " + cleanTitle)}`;
+            }
             
             programHtml += `
                 <div class="bg-white p-5 rounded-[2.5rem] shadow-md border border-slate-50 mb-4 flex justify-between items-center group transition hover:border-blue-200" style="page-break-inside: avoid;">
@@ -284,33 +337,124 @@ function renderUI(dest, md) {
                         <b class="text-slate-900 font-extrabold text-base block mb-0.5 tracking-tight">${title}</b>
                         <p class="text-slate-500 text-[11px] leading-relaxed line-clamp-2">${desc}</p>
                     </div>
-                    <a href="${gMapsUrl}" target="_blank" class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center flex-shrink-0 shadow-lg group-hover:bg-blue-600 transition">
-                        <i class="fas fa-map-marker-alt text-sm"></i>
+                    <a href="${linkUrl}" target="_blank" class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center flex-shrink-0 shadow-lg group-hover:bg-blue-600 transition" data-html2canvas-ignore="true">
+                        <i class="fas fa-${isRestaurant ? 'utensils' : 'map-marker-alt'} text-sm"></i>
                     </a>
                 </div>`;
         }
     });
 
+    // Проверка дали потребителят е влязъл за PDF бутона
+    const checkUserForPDF = async () => {
+        const { data: { user } } = await sbClient.auth.getUser();
+        return user;
+    };
+
     res.innerHTML = `
         <div id="pdfArea" class="max-w-5xl mx-auto pb-24 bg-white p-4 md:p-8 rounded-[4rem]">
-            <div class="bg-slate-900 p-8 rounded-[2.5rem] text-white mb-10 flex justify-between items-center shadow-xl border-b-[8px] border-blue-600">
-                <div>
-                    <h2 class="text-3xl font-black italic uppercase tracking-tighter">${dest}</h2>
-                    <p class="text-[9px] opacity-50 tracking-[0.3em] font-light">PREMIUM GUIDE</p>
-                </div>
-                <div class="flex gap-2" data-html2canvas-ignore="true">
-                    <button onclick="saveToCloud('${dest}')" class="bg-emerald-500 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase shadow-lg">Запази</button>
-                    <button onclick="saveToPDF('${dest}')" class="bg-blue-600 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase shadow-lg">PDF</button>
+            <!-- Хедър с информация -->
+            <div class="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-8 md:p-10 rounded-[2.5rem] text-white mb-10 shadow-2xl border-b-[8px] border-blue-600" style="page-break-inside: avoid;">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center">
+                                <i class="fas fa-map-marked-alt text-2xl"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-3xl md:text-4xl font-black italic uppercase tracking-tighter">${dest}</h2>
+                                <p class="text-[9px] text-blue-300 tracking-[0.3em] font-light uppercase">Premium Travel Guide</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-[10px] mt-4">
+                            <div class="bg-white/10 backdrop-blur-sm px-3 py-2 rounded-xl border border-white/20">
+                                <i class="fas fa-calendar-alt text-blue-400 mr-1"></i>
+                                <span class="font-bold">${days} дни</span>
+                            </div>
+                            <div class="bg-white/10 backdrop-blur-sm px-3 py-2 rounded-xl border border-white/20">
+                                <i class="fas fa-users text-emerald-400 mr-1"></i>
+                                <span class="font-bold">${budgetAmount || travelers} ${currency ? 'души' : ''}</span>
+                            </div>
+                            <div class="bg-white/10 backdrop-blur-sm px-3 py-2 rounded-xl border border-white/20">
+                                <i class="fas fa-wallet text-purple-400 mr-1"></i>
+                                <span class="font-bold">${budgetAmount} ${currency}</span>
+                            </div>
+                            <div class="bg-white/10 backdrop-blur-sm px-3 py-2 rounded-xl border border-white/20">
+                                <i class="fas fa-calendar-check text-yellow-400 mr-1"></i>
+                                <span class="font-bold">${startDate || 'Гъвкави дати'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="actionButtons" class="flex gap-2" data-html2canvas-ignore="true">
+                        <button onclick="saveToCloud('${dest}')" class="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase shadow-lg transition">
+                            <i class="fas fa-bookmark mr-1"></i> Запази
+                        </button>
+                        <button id="pdfButton" onclick="handlePDFClick('${dest}')" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase shadow-lg transition">
+                            <i class="fas fa-file-pdf mr-1"></i> PDF
+                        </button>
+                    </div>
                 </div>
             </div>
-            <div class="mb-10 px-2">
-                <h4 class="text-[10px] font-black text-slate-400 mb-4 uppercase tracking-[0.2em] italic border-l-4 border-blue-500 pl-3">НАСТАНЯВАНЕ</h4>
+            
+            <!-- Хотели -->
+            <div class="mb-10 px-2" style="page-break-inside: avoid;">
+                <h4 class="text-[10px] font-black text-slate-400 mb-4 uppercase tracking-[0.2em] italic border-l-4 border-blue-500 pl-3">
+                    <i class="fas fa-hotel mr-2"></i>Препоръчани настанявания
+                </h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">${hotelsHtml}</div>
             </div>
+            
+            <!-- Програма -->
             <div class="px-2">${programHtml}</div>
+            
+            <!-- Footer (само в PDF) -->
+            <div class="mt-16 p-6 bg-slate-50 rounded-2xl text-center border-t-4 border-blue-600" style="page-break-inside: avoid;" data-html2canvas-show="true">
+                <p class="text-[10px] text-slate-600 mb-2">
+                    <i class="fas fa-bolt text-blue-600"></i>
+                    Генерирано от <b>ITINERAI</b> - Вашият AI Туристически Архитект
+                </p>
+                <p class="text-[8px] text-slate-400">
+                    itinerai.com | Създадено на ${new Date().toLocaleDateString('bg-BG')}
+                </p>
+            </div>
         </div>`;
     res.classList.remove('hidden');
     res.scrollIntoView({ behavior: 'smooth' });
+    
+    // Проверка за PDF бутона след рендериране
+    checkUserForPDF().then(user => {
+        const pdfBtn = document.getElementById('pdfButton');
+        if (pdfBtn && !user) {
+            pdfBtn.disabled = true;
+            pdfBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            pdfBtn.title = 'Влезте в профила си за да експортвате в PDF';
+        }
+    });
+}
+
+/**
+ * Обработка на PDF клик
+ */
+window.handlePDFClick = async function(dest) {
+    const { data: { user } } = await sbClient.auth.getUser();
+    
+    if (!user) {
+        const shouldLogin = confirm(
+            "🔒 PDF експорт е достъпен само за регистрирани потребители!\n\n" +
+            "✨ Влезте в профила си или се регистрирайте безплатно за да:\n" +
+            "• Изтегляте програмите си в PDF формат\n" +
+            "• Запазвате неограничен брой планове\n" +
+            "• Достъпвате ги от всяко устройство\n\n" +
+            "Искате ли да се влезете/регистрирате сега?"
+        );
+        
+        if (shouldLogin) {
+            openModal();
+        }
+        return;
+    }
+    
+    // Ако е логнат, извиква PDF функцията
+    saveToPDF(dest);
 }
 
 /**
@@ -327,10 +471,11 @@ window.saveToPDF = async function(n) {
     const loadingDiv = document.createElement('div');
     loadingDiv.id = 'pdfLoading';
     loadingDiv.innerHTML = `
-        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; display: flex; align-items: center; justify-content: center;">
-            <div style="background: white; padding: 30px; border-radius: 20px; text-align: center;">
-                <div style="width: 50px; height: 50px; border: 5px solid #3b82f6; border-top-color: transparent; border-radius: 50%; margin: 0 auto 20px; animation: spin 1s linear infinite;"></div>
-                <p style="color: #1e293b; font-weight: bold; font-size: 14px;">Генериране на PDF...</p>
+        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+            <div style="background: white; padding: 40px; border-radius: 24px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+                <div style="width: 60px; height: 60px; border: 6px solid #3b82f6; border-top-color: transparent; border-radius: 50%; margin: 0 auto 20px; animation: spin 1s linear infinite;"></div>
+                <p style="color: #1e293b; font-weight: bold; font-size: 16px; margin-bottom: 8px;">Генериране на PDF...</p>
+                <p style="color: #64748b; font-size: 12px;">Моля изчакайте, създаваме вашия документ</p>
             </div>
         </div>
         <style>
@@ -340,38 +485,84 @@ window.saveToPDF = async function(n) {
     document.body.appendChild(loadingDiv);
     
     try {
+        // Премахване на data-html2canvas-ignore атрибутите временно
+        const ignoreElements = el.querySelectorAll('[data-html2canvas-ignore]');
+        ignoreElements.forEach(elem => {
+            elem.style.display = 'none';
+        });
+        
+        // Показване на footer
+        const footerElements = el.querySelectorAll('[data-html2canvas-show]');
+        footerElements.forEach(elem => {
+            elem.style.display = 'block';
+        });
+        
         const opt = {
-            margin: [15, 10, 15, 10],
-            filename: n + '_itinerary.pdf',
-            image: { type: 'jpeg', quality: 0.95 },
+            margin: [12, 8, 12, 8],
+            filename: `${n}_itinerary_${new Date().toISOString().split('T')[0]}.pdf`,
+            image: { 
+                type: 'jpeg', 
+                quality: 0.96
+            },
             html2canvas: { 
-                scale: 2, 
+                scale: 2,
                 useCORS: true,
                 logging: false,
+                letterRendering: true,
                 scrollY: -window.scrollY,
+                scrollX: 0,
                 windowWidth: el.scrollWidth,
-                windowHeight: el.scrollHeight
+                windowHeight: el.scrollHeight,
+                backgroundColor: '#ffffff'
             },
             jsPDF: { 
                 unit: 'mm', 
                 format: 'a4', 
                 orientation: 'portrait',
-                compress: true
+                compress: true,
+                precision: 16
             },
-            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+            pagebreak: { 
+                mode: ['avoid-all', 'css', 'legacy'],
+                before: '.page-break-before',
+                after: '.page-break-after',
+                avoid: ['div', 'img']
+            }
         };
         
         await html2pdf().set(opt).from(el).save();
         
-        // Премахване на loading индикатор
+        // Връщане на оригиналния вид
+        ignoreElements.forEach(elem => {
+            elem.style.display = '';
+        });
+        
+        // Премахване на loading индикатор с успех съобщение
+        loadingDiv.querySelector('div > div').innerHTML = `
+            <div style="width: 60px; height: 60px; background: #10b981; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-check" style="color: white; font-size: 30px;"></i>
+            </div>
+            <p style="color: #1e293b; font-weight: bold; font-size: 16px; margin-bottom: 8px;">PDF създаден успешно!</p>
+            <p style="color: #64748b; font-size: 12px;">Файлът се изтегля автоматично</p>
+        `;
+        
         setTimeout(() => {
             document.getElementById('pdfLoading')?.remove();
-        }, 500);
+        }, 1500);
         
     } catch (error) {
         console.error('PDF грешка:', error);
-        alert('Възникна грешка при генерирането на PDF файла!');
-        document.getElementById('pdfLoading')?.remove();
+        loadingDiv.querySelector('div > div').innerHTML = `
+            <div style="width: 60px; height: 60px; background: #ef4444; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-times" style="color: white; font-size: 30px;"></i>
+            </div>
+            <p style="color: #1e293b; font-weight: bold; font-size: 16px; margin-bottom: 8px;">Грешка при създаване!</p>
+            <p style="color: #64748b; font-size: 12px;">Моля опитайте отново</p>
+        `;
+        
+        setTimeout(() => {
+            document.getElementById('pdfLoading')?.remove();
+        }, 2000);
     }
 };
 
