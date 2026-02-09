@@ -10,7 +10,7 @@ async function init() {
             setupAuth();
             checkUser();
         }
-    } catch (e) { console.error("Грешка при инит:", e); }
+    } catch (e) { console.error("Грешка:", e); }
 }
 init();
 
@@ -20,8 +20,7 @@ function setupAuth() {
     btn.onclick = async () => {
         const email = document.getElementById('authEmail').value;
         const pass = document.getElementById('authPassword').value;
-        const title = document.getElementById('authTitle').innerText;
-        const isReg = title.includes('Регистрация');
+        const isReg = document.getElementById('authTitle').innerText.includes('Регистрация');
         try {
             const { error } = isReg 
                 ? await sbClient.auth.signUp({ email, password: pass })
@@ -29,18 +28,17 @@ function setupAuth() {
             if (error) throw error;
             document.getElementById('authModal').classList.add('hidden');
             checkUser();
-        } catch (err) { alert("Грешка: " + err.message); }
+        } catch (err) { alert(err.message); }
     };
 }
 
 async function checkUser() {
     const { data: { user } } = await sbClient.auth.getUser();
-    const status = document.getElementById('userStatus');
-    if (user && status) {
-        status.innerHTML = `
+    if (user && document.getElementById('userStatus')) {
+        document.getElementById('userStatus').innerHTML = `
             <div class="flex items-center gap-3 bg-slate-800 p-2 px-4 rounded-xl border border-slate-700">
                 <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">${user.email}</span>
-                <button onclick="sbClient.auth.signOut().then(() => location.reload())" class="text-white hover:text-red-500 transition ml-2"><i class="fas fa-sign-out-alt"></i></button>
+                <button onclick="sbClient.auth.signOut().then(() => location.reload())" class="text-white hover:text-red-500 transition px-2"><i class="fas fa-sign-out-alt"></i></button>
             </div>`;
     }
 }
@@ -54,21 +52,18 @@ async function generatePlan(e) {
     document.getElementById('loader').classList.remove('hidden');
     document.getElementById('result').classList.add('hidden');
 
-    const prompt = `Направи елитен план за ${dest} за ${days} дни на БЪЛГАРСКИ. 
+    const prompt = `Направи премиум план за ${dest} за ${days} дни на БЪЛГАРСКИ. 
     БЕЗ СИМВОЛИ # ИЛИ *. 
-    СТРИКТНА СТРУКТУРА:
-    ХОТЕЛ: [Име] (Дай точно 4 такива реда най-отгоре)
-    За всеки ден задължително (на отделни редове):
-    ДЕН: [Номер]
-    ☕ ЗАКУСКА: [Място] : [Описание]
-    🏛️ ОБЕКТ: [Забележителност 1] : [Описание]
-    🏛️ ОБЕКТ: [Забележителност 2] : [Описание]
-    🏛️ ОБЕКТ: [Забележителност 3] : [Описание]
-    🍴 ОБЯД: [Ресторант] : [Описание]
-    📸 ОБЕКТ: [Забележителност 4] : [Описание]
-    📸 ОБЕКТ: [Забележителност 5] : [Описание]
-    🌙 ВЕЧЕРЯ: [Ресторант] : [Описание]
-    ВАЖНО: Никакво групиране. Всеки обект = нов ред с емоджи и ':' за разделител.`;
+    1. ХОТЕЛИ: Дай точно 4 реда: "ХОТЕЛ: [Име]".
+    2. ПРОГРАМА: Всеки ден ЗАДЪЛЖИТЕЛНО започва с "ДЕН: [Номер]".
+    За всеки ден дай следните точки, всяка на НОВ РЕД (без да ги групираш):
+    ☕ [Име на място за закуска] - [Подробно описание на мястото]
+    🏛️ [Име на забележителност 1] - [Подробно описание защо се посещава]
+    🏛️ [Име на забележителност 2] - [Подробно описание]
+    🍴 [Име на ресторант за обяд] - [Описание на кухнята]
+    📸 [Име на забележителност 3] - [Подробно описание]
+    📸 [Име на забележителност 4] - [Подробно описание]
+    🌙 [Име на ресторант за вечеря] - [Описание на атмосферата]`;
 
     try {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -76,12 +71,12 @@ async function generatePlan(e) {
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${O_KEY}` },
             body: JSON.stringify({
                 model: "gpt-4o",
-                messages: [{role: "system", content: "Ти си професионален гид. Всеки обект трябва да е на нов ред с емоджи и име. Използвай ':' за разделител."}, {role: "user", content: prompt}]
+                messages: [{role: "system", content: "Ти си професионален гид. НИКОГА не групирай обекти. Всеки обект трябва да е на нов ред с емоджи, име и описание, разделени с тире."}, {role: "user", content: prompt}]
             })
         });
         const data = await response.json();
         renderUI(dest, data.choices[0].message.content);
-    } catch (err) { alert("Грешка при генериране!"); }
+    } catch (err) { alert("Грешка!"); }
     finally { document.getElementById('loader').classList.add('hidden'); }
 }
 
@@ -99,30 +94,37 @@ function renderUI(dest, md) {
         
         if (upper.startsWith('ХОТЕЛ:') && hCount < 4) {
             const name = l.split(':')[1].trim();
-            const url = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest + " " + name)}&aid=701816`;
+            const hotelUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest + " " + name)}&aid=701816`;
             hotelsHtml += `
             <div class="bg-white p-4 rounded-2xl flex justify-between items-center border border-slate-100 shadow-sm">
-                <div><p class="text-[8px] font-black text-blue-600 uppercase mb-0.5">Настаняване</p><p class="font-bold text-slate-800 text-[11px] leading-tight">${name}</p></div>
-                <a href="${url}" target="_blank" class="bg-blue-600 text-white px-3 py-1.5 rounded-xl text-[9px] font-black uppercase shadow-md flex-shrink-0">Резервирай</a>
+                <div><p class="text-[8px] font-black text-blue-600 uppercase mb-0.5 tracking-tighter">Препоръчан хотел</p><p class="font-bold text-slate-800 text-[11px] leading-tight">${name}</p></div>
+                <a href="${hotelUrl}" target="_blank" class="bg-blue-600 text-white px-3 py-1.5 rounded-xl text-[9px] font-black uppercase shadow-md flex-shrink-0">Резервирай</a>
             </div>`;
             hCount++;
         }
         else if (upper.includes('ДЕН:')) {
-            programHtml += `<div class="text-2xl font-black text-slate-900 border-b-4 border-blue-600/20 mt-10 mb-6 uppercase italic pb-1 tracking-tight">${l}</div>`;
+            programHtml += `<div class="text-2xl font-black text-slate-900 border-b-4 border-blue-600/20 mt-10 mb-6 uppercase italic pb-1">${l}</div>`;
         }
-        else if (/[\u{1F300}-\u{1F9FF}]/u.test(l) && l.includes(':')) {
-            const parts = l.split(':');
-            const title = parts[0].trim();
-            const desc = parts[1] ? parts[1].trim() : "";
-            const cleanTitle = title.replace(/[\u{1F300}-\u{1F9FF}]/u, '').trim();
+        else if (/[\u{1F300}-\u{1F9FF}]/u.test(l)) {
+            // Търсим тире или двоеточие за разделител
+            const separator = l.includes(' - ') ? ' - ' : (l.includes(':') ? ':' : null);
+            if (!separator) return;
+
+            const parts = l.split(separator);
+            const titleWithEmoji = parts[0].trim();
+            const desc = parts.slice(1).join(separator).trim();
             
-            const tpUrl = `https://wayaway.tp.st/search?marker=701816&query=${encodeURIComponent(dest + " " + cleanTitle)}&subid=itinerflai`;
+            // Чистим заглавието от емоджито за линка
+            const cleanTitle = titleWithEmoji.replace(/[\u{1F300}-\u{1F9FF}]/u, '').trim();
+            
+            // ЛИНК С ТВОЯ МАРКЕР 701816
+            const tpUrl = `https://tp.media/r?marker=701816&trs=1&p=3959&u=https%3A%2F%2Fwww.wayaway.io%2Fsearch%3Fquery%3D${encodeURIComponent(dest + " " + cleanTitle)}`;
             
             programHtml += `
-            <div class="bg-white p-5 rounded-[2.5rem] shadow-md border border-slate-50 mb-4 flex justify-between items-center group transition hover:border-blue-200">
+            <div class="bg-white p-6 rounded-[2.5rem] shadow-md border border-slate-50 mb-4 flex justify-between items-center group transition hover:border-blue-100">
                 <div class="flex flex-col pr-4">
-                    <b class="text-slate-900 font-extrabold text-base block mb-0.5 tracking-tight">${title}</b>
-                    <p class="text-slate-500 text-[11px] leading-relaxed line-clamp-2">${desc}</p>
+                    <b class="text-slate-900 font-extrabold text-base block mb-1 tracking-tight">${titleWithEmoji}</b>
+                    <p class="text-slate-500 text-[11px] leading-relaxed line-clamp-3">${desc}</p>
                 </div>
                 <a href="${tpUrl}" target="_blank" class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center flex-shrink-0 shadow-lg group-hover:bg-blue-600 transition">
                     <i class="fas fa-external-link-alt text-sm"></i>
@@ -134,14 +136,14 @@ function renderUI(dest, md) {
     res.innerHTML = `
         <div id="pdfArea" class="max-w-5xl mx-auto pb-24 bg-slate-50/30 p-4 md:p-8 rounded-[4rem]">
             <div class="bg-slate-900 p-8 rounded-[2.5rem] text-white mb-10 flex justify-between items-center shadow-xl border-b-[8px] border-blue-600">
-                <div><h2 class="text-3xl font-black italic uppercase tracking-tighter">${dest}</h2><p class="text-[9px] opacity-50 tracking-[0.3em] font-light uppercase">Premium Guide</p></div>
+                <div><h2 class="text-3xl font-black italic uppercase tracking-tighter">${dest}</h2><p class="text-[9px] opacity-50 uppercase font-light">Premium Itinerary</p></div>
                 <div class="flex gap-2">
                     <button onclick="saveToCloud('${dest}')" class="bg-emerald-500 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase">Запази</button>
                     <button onclick="saveToPDF('${dest}')" class="bg-blue-600 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase">PDF</button>
                 </div>
             </div>
             <div class="mb-10 px-2">
-                <h4 class="text-[10px] font-black text-slate-400 mb-4 uppercase tracking-[0.2em] italic border-l-4 border-blue-500 pl-3">ПРЕПОРЪЧАНО НАСТАНЯВАНЕ</h4>
+                <h4 class="text-[10px] font-black text-slate-400 mb-4 uppercase tracking-[0.2em] italic border-l-4 border-blue-500 pl-3">НАСТАНЯВАНЕ</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">${hotelsHtml}</div>
             </div>
             <div class="px-2">${programHtml}</div>
@@ -157,7 +159,7 @@ window.saveToPDF = function(n) {
 
 async function saveToCloud(dest) {
     const { data: { user } } = await sbClient.auth.getUser();
-    if (!user) return alert("Влезте в профила!");
+    if (!user) return alert("Моля, влезте в профила!");
     const content = document.getElementById('pdfArea').innerHTML;
     await sbClient.from('itineraries').insert([{ user_id: user.id, destination: dest, content }]);
     alert("Запазено! ✨");
