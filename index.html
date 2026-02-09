@@ -3,47 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Travel Planner</title>
+    <title>Premium Travel Planner</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        body { font-family: sans-serif; background-color: #0f172a; color: white; }
-    </style>
 </head>
-<body class="p-4 md:p-10">
+<body class="bg-slate-50 text-slate-900 font-sans leading-tight">
 
-    <nav class="flex justify-between items-center max-w-5xl mx-auto mb-10">
-        <div class="text-xl font-bold">TRAVEL <span class="text-blue-500">AI</span></div>
-        <div id="userStatus"></div>
+    <nav class="max-w-6xl mx-auto p-6 flex justify-between items-center">
+        <div class="text-2xl font-black tracking-tighter uppercase italic text-slate-900">
+            TRAVEL<span class="text-blue-600">AI</span>
+        </div>
+        <div id="userStatus">
+            </div>
     </nav>
 
-    <div class="max-w-4xl mx-auto bg-slate-900/50 p-8 rounded-3xl border border-slate-800 shadow-2xl">
-        <form id="planForm" class="flex flex-col md:flex-row gap-4">
-            <input type="text" id="destination" placeholder="Дестинация" required class="flex-1 bg-slate-800 border border-slate-700 p-4 rounded-xl text-white">
-            <input type="number" id="days" placeholder="Дни" min="1" max="14" required class="md:w-24 bg-slate-800 border border-slate-700 p-4 rounded-xl text-white">
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 px-8 py-4 rounded-xl font-bold uppercase text-sm">Генерирай</button>
-        </form>
-    </div>
+    <main class="max-w-4xl mx-auto pt-10 px-6">
+        <div class="bg-white p-8 md:p-12 rounded-[3rem] shadow-xl border border-slate-100 text-center">
+            <h1 class="text-4xl font-black mb-4 uppercase italic tracking-tighter">Планувай своето <span class="text-blue-600">пътуване</span></h1>
+            
+            <form id="planForm" class="flex flex-col md:flex-row gap-3 mt-8">
+                <input type="text" id="destination" placeholder="Къде ще пътувате?" required 
+                    class="flex-1 bg-slate-100 border-none p-4 rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none transition">
+                <input type="number" id="days" placeholder="Дни" min="1" max="14" required 
+                    class="md:w-24 bg-slate-100 border-none p-4 rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none transition">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-black px-10 py-4 rounded-2xl uppercase text-sm tracking-widest transition shadow-lg shadow-blue-200">
+                    Генерирай
+                </button>
+            </form>
+        </div>
 
-    <div id="loader" class="hidden text-center mt-10 text-slate-500 uppercase text-xs font-bold tracking-widest">Генериране...</div>
-    <div id="placeholder" class="text-center mt-20 opacity-20"><i class="fas fa-route text-6xl"></i></div>
+        <div id="loader" class="hidden mt-16 text-center">
+            <div class="inline-block w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <p class="mt-4 text-slate-400 font-bold uppercase text-[10px] tracking-widest">Създаваме вашия маршрут...</p>
+        </div>
 
-    <div id="result" class="mt-10 hidden"></div>
-
-    <div class="max-w-5xl mx-auto mt-20 border-t border-slate-800 pt-10 pb-20">
-        <h3 class="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 mb-6 italic">Моите запазени програми:</h3>
-        <div id="savedItineraries" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div id="result" class="mt-12 hidden">
             </div>
-    </div>
 
-    <div id="authModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-        <div class="bg-slate-900 p-8 rounded-3xl max-w-sm w-full border border-slate-800">
-            <h2 id="authTitle" class="text-xl font-bold mb-6">Вход</h2>
-            <input type="email" id="authEmail" placeholder="Email" class="w-full bg-slate-800 p-3 rounded-lg mb-3">
-            <input type="password" id="authPassword" placeholder="Password" class="w-full bg-slate-800 p-3 rounded-lg mb-6">
-            <button id="realSubmitBtn" class="w-full bg-blue-600 p-3 rounded-lg font-bold">Продължи</button>
+        <div class="mt-20 pb-20 border-t border-slate-200 pt-16">
+            <div class="flex items-center gap-3 mb-8">
+                <div class="h-1 w-8 bg-blue-600 rounded-full"></div>
+                <h3 class="text-sm font-black uppercase italic tracking-widest text-slate-400">Моите запазени програми</h3>
+            </div>
+            
+            <div id="savedItineraries" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <p class="text-slate-400 text-[10px] font-bold uppercase italic">Няма открити записи.</p>
+            </div>
+        </div>
+    </main>
+
+    <div id="authModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-6 z-50">
+        <div class="bg-white p-10 rounded-[2.5rem] max-w-sm w-full shadow-2xl">
+            <h2 id="authTitle" class="text-xl font-bold uppercase italic mb-6">Вход в системата</h2>
+            <div class="space-y-3">
+                <input type="email" id="authEmail" placeholder="Имейл" class="w-full bg-slate-100 p-4 rounded-xl outline-none">
+                <input type="password" id="authPassword" placeholder="Парола" class="w-full bg-slate-100 p-4 rounded-xl outline-none">
+                <button id="realSubmitBtn" class="w-full bg-blue-600 text-white p-4 rounded-xl font-black uppercase text-xs tracking-widest shadow-lg">Продължи</button>
+            </div>
+            <button onclick="document.getElementById('authModal').classList.add('hidden')" class="mt-4 w-full text-slate-400 text-[10px] font-bold uppercase">Затвори</button>
         </div>
     </div>
 
