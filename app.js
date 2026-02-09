@@ -9,9 +9,8 @@ async function init() {
             sbClient = window.supabase.createClient(S_URL, S_KEY);
             setupAuth();
             checkUser();
-            loadUserItineraries(); // Зареждаме запазените програми при старт
         }
-    } catch (e) { console.error("Грешка при инит:", e); }
+    } catch (e) { console.error("Грешка:", e); }
 }
 init();
 
@@ -41,11 +40,11 @@ async function checkUser() {
                 <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">${user.email}</span>
                 <button onclick="sbClient.auth.signOut().then(() => location.reload())" class="text-white hover:text-red-500 transition px-2"><i class="fas fa-sign-out-alt"></i></button>
             </div>`;
-        loadUserItineraries();
+        loadUserItineraries(); // Извикваме списъка при логнат потребител
     }
 }
 
-// ФУНКЦИЯ ЗА ЗАРЕЖДАНЕ НА ЗАПАЗЕНИТЕ ПРОГРАМИ (SELECT)
+// 1. ФУНКЦИЯ ЗА ЗАРЕЖДАНЕ (SELECT)
 async function loadUserItineraries() {
     const { data: { user } } = await sbClient.auth.getUser();
     if (!user) return;
@@ -58,30 +57,25 @@ async function loadUserItineraries() {
     const container = document.getElementById('savedItineraries');
     if (!container) return;
 
-    if (error) {
-        container.innerHTML = `<p class="text-red-400 text-xs">Грешка при зареждане.</p>`;
-        return;
-    }
-
-    if (data.length === 0) {
-        container.innerHTML = `<p class="text-slate-500 text-xs uppercase font-bold italic">Нямате запазени програми.</p>`;
-        return;
-    }
-
-    container.innerHTML = data.map(item => `
-        <div class="bg-white/5 border border-white/10 p-4 rounded-2xl mb-3 flex justify-between items-center group">
-            <div>
-                <h5 class="text-white font-bold text-sm uppercase tracking-tight">${item.destination}</h5>
-                <p class="text-[9px] text-slate-500">${new Date(item.created_at).toLocaleDateString('bg-BG')}</p>
+    if (data && data.length > 0) {
+        container.innerHTML = data.map(item => `
+            <div class="bg-slate-900/50 border border-slate-800 p-4 rounded-2xl mb-3 flex justify-between items-center group">
+                <div>
+                    <h5 class="text-white font-bold text-sm uppercase tracking-tight">${item.destination}</h5>
+                    <p class="text-[9px] text-slate-500">${new Date(item.created_at).toLocaleDateString('bg-BG')}</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="viewSaved('${item.id}')" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-blue-500 transition">Преглед</button>
+                    <button onclick="deleteSaved('${item.id}')" class="bg-red-500/20 text-red-400 p-2 px-3 rounded-xl text-[10px] hover:bg-red-500 hover:text-white transition"><i class="fas fa-trash"></i></button>
+                </div>
             </div>
-            <div class="flex gap-2">
-                <button onclick="viewSaved('${item.id}')" class="bg-blue-600 text-white p-2 px-4 rounded-lg text-[10px] font-bold uppercase hover:bg-blue-500 transition">Преглед</button>
-                <button onclick="deleteSaved('${item.id}')" class="bg-red-500/20 text-red-400 p-2 px-3 rounded-lg text-[10px] hover:bg-red-500 hover:text-white transition"><i class="fas fa-trash"></i></button>
-            </div>
-        </div>
-    `).join('');
+        `).join('');
+    } else {
+        container.innerHTML = `<p class="text-slate-600 text-[10px] uppercase font-bold italic tracking-widest">Нямате запазени планове.</p>`;
+    }
 }
 
+// 2. ФУНКЦИЯ ЗА ПРЕГЛЕД
 window.viewSaved = async (id) => {
     const { data, error } = await sbClient.from('itineraries').select('*').eq('id', id).single();
     if (data) {
@@ -92,17 +86,17 @@ window.viewSaved = async (id) => {
     }
 };
 
+// 3. ФУНКЦИЯ ЗА ИЗТРИВАНЕ (DELETE)
 window.deleteSaved = async (id) => {
     if (!confirm("Сигурни ли сте, че искате да изтриете тази програма?")) return;
-    await sbClient.from('itineraries').delete().eq('id', id);
-    loadUserItineraries();
+    const { error } = await sbClient.from('itineraries').delete().eq('id', id);
+    if (!error) loadUserItineraries();
 };
 
 async function generatePlan(e) {
     e.preventDefault();
     const dest = document.getElementById('destination').value;
     const days = document.getElementById('days').value;
-
     document.getElementById('placeholder').classList.add('hidden');
     document.getElementById('loader').classList.remove('hidden');
     document.getElementById('result').classList.add('hidden');
@@ -129,27 +123,21 @@ async function generatePlan(e) {
         });
         const data = await response.json();
         renderUI(dest, data.choices[0].message.content);
-    } catch (err) { alert("Грешка при генериране!"); }
+    } catch (err) { alert("Грешка!"); }
     finally { document.getElementById('loader').classList.add('hidden'); }
 }
 
 function renderUI(dest, md) {
     const res = document.getElementById('result');
-    let hotelsHtml = "";
-    let programHtml = "";
-    let hCount = 0;
-    
+    let hotelsHtml = ""; let programHtml = ""; let hCount = 0;
     const lines = md.replace(/[*#]/g, '').split('\n').filter(l => l.trim() !== "");
 
     lines.forEach(line => {
-        const l = line.trim();
-        const upper = l.toUpperCase();
-        
+        const l = line.trim(); const upper = l.toUpperCase();
         if (upper.startsWith('ХОТЕЛ:') && hCount < 4) {
             const name = l.split(':')[1].trim();
             const hotelUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest + " " + name)}&aid=701816`;
-            hotelsHtml += `
-            <div class="bg-white p-4 rounded-2xl flex justify-between items-center border border-slate-100 shadow-sm">
+            hotelsHtml += `<div class="bg-white p-4 rounded-2xl flex justify-between items-center border border-slate-100 shadow-sm">
                 <div><p class="text-[8px] font-black text-blue-600 uppercase mb-0.5">Настаняване</p><p class="font-bold text-slate-800 text-[11px] leading-tight">${name}</p></div>
                 <a href="${hotelUrl}" target="_blank" class="bg-blue-600 text-white px-3 py-1.5 rounded-xl text-[9px] font-black uppercase shadow-md flex-shrink-0">Резервирай</a>
             </div>`;
@@ -159,16 +147,11 @@ function renderUI(dest, md) {
             programHtml += `<div class="text-2xl font-black text-slate-900 border-b-4 border-blue-600/20 mt-10 mb-6 uppercase italic pb-1">${l}</div>`;
         }
         else if (/[\u{1F300}-\u{1F9FF}]/u.test(l)) {
-            const parts = l.split('-');
-            const title = parts[0].trim();
-            const desc = parts[1] ? parts[1].trim() : "";
+            const parts = l.split('-'); const title = parts[0].trim(); const desc = parts[1] ? parts[1].trim() : "";
             const cleanTitle = title.replace(/[\u{1F300}-\u{1F9FF}]/u, '').trim();
-            
-            // КОРЕКТЕН GOOGLE MAPS ЛИНК
             const gMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest + " " + cleanTitle)}`;
             
-            programHtml += `
-            <div class="bg-white p-5 rounded-[2.5rem] shadow-md border border-slate-50 mb-4 flex justify-between items-center group transition hover:border-blue-200" style="page-break-inside: avoid;">
+            programHtml += `<div class="bg-white p-5 rounded-[2.5rem] shadow-md border border-slate-50 mb-4 flex justify-between items-center group transition hover:border-blue-200" style="page-break-inside: avoid;">
                 <div class="flex flex-col pr-4">
                     <b class="text-slate-900 font-extrabold text-base block mb-0.5 tracking-tight">${title}</b>
                     <p class="text-slate-500 text-[11px] leading-relaxed line-clamp-2">${desc}</p>
@@ -209,11 +192,7 @@ async function saveToCloud(dest) {
     if (!user) return alert("Моля, влезте в профила!");
     const content = document.getElementById('pdfArea').innerHTML;
     const { error } = await sbClient.from('itineraries').insert([{ user_id: user.id, destination: dest, content: content }]);
-    if (error) alert("Грешка при запис!");
-    else {
-        alert("Програмата е запазена успешно! ✨");
-        loadUserItineraries(); // Обновяваме списъка веднага
-    }
+    if (!error) { alert("Запазено! ✨"); loadUserItineraries(); }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
