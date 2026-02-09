@@ -76,6 +76,7 @@ async function checkUser() {
     const { data: { user } } = await sbClient.auth.getUser();
     const statusDiv = document.getElementById('userStatus');
     const benefitsBox = document.getElementById('benefitsBox');
+    const myTripsSection = document.getElementById('myTripsSection');
     
     if (user && statusDiv) {
         statusDiv.innerHTML = `
@@ -89,10 +90,19 @@ async function checkUser() {
         // Скриване на benefitsBox при влязъл потребител
         if (benefitsBox) benefitsBox.classList.add('hidden');
         
+        // Показване на секцията "Моите запазени програми"
+        if (myTripsSection) myTripsSection.classList.remove('hidden');
+        
+        // Изчистване на ограничението за нерегистрирани
+        localStorage.removeItem('hasGeneratedItinerary');
+        
         loadUserItineraries(); 
     } else {
         // Показване на benefitsBox при невлязъл потребител
         if (benefitsBox) benefitsBox.classList.remove('hidden');
+        
+        // Скриване на секцията "Моите запазени програми"
+        if (myTripsSection) myTripsSection.classList.add('hidden');
     }
 }
 
@@ -157,6 +167,32 @@ window.deleteSaved = async (id) => {
  */
 async function generatePlan(e) {
     e.preventDefault();
+    
+    // Проверка дали потребителят е влязъл
+    const { data: { user } } = await sbClient.auth.getUser();
+    
+    // Ако НЕ е влязъл, проверяваме дали вече е генерирал програма
+    if (!user) {
+        const hasGenerated = localStorage.getItem('hasGeneratedItinerary');
+        
+        if (hasGenerated === 'true') {
+            // Показване на съобщение с призив за регистрация
+            const shouldRegister = confirm(
+                "🔒 Достигнахте лимита за гост-потребители!\n\n" +
+                "✨ Регистрирайте се безплатно, за да:\n" +
+                "• Генерирате неограничен брой програми\n" +
+                "• Запазвате и достъпвате програмите си по всяко време\n" +
+                "• Експортвате в PDF формат\n\n" +
+                "Искате ли да се регистрирате сега?"
+            );
+            
+            if (shouldRegister) {
+                openModal();
+            }
+            return; // Спиране на генерирането
+        }
+    }
+    
     const dest = document.getElementById('destination').value;
     const days = document.getElementById('days').value;
     
@@ -194,6 +230,11 @@ async function generatePlan(e) {
         });
         const data = await response.json();
         renderUI(dest, data.choices[0].message.content);
+        
+        // Ако потребителят НЕ е влязъл, маркираме че е генерирал програма
+        if (!user) {
+            localStorage.setItem('hasGeneratedItinerary', 'true');
+        }
     } catch (err) {
         alert("Грешка при генериране на плана!");
     } finally {
