@@ -54,8 +54,14 @@ async function generatePlan(e) {
 
     const prompt = `Направи премиум план за ${dest} за ${days} дни на БЪЛГАРСКИ. БЕЗ СИМВОЛИ # ИЛИ *. 
     1. ХОТЕЛИ: Дай точно 4 реда: "ХОТЕЛ: [Име]".
-    2. ПРОГРАМА: Всеки ден започва с "ДЕН: [Номер]".
-    Всеки обект (закуска, забележителности, обяд, вечеря) на отделен ред с емоджи и описание след тире.`;
+    2. ПРОГРАМА: Всеки ден ЗАДЪЛЖИТЕЛНО започва с "ДЕН: [Номер]".
+    За всеки ден дай на отделни редове (с емоджи и описание):
+    ☕ [Закуска] - [Описание]
+    🏛️ [Обект 1] - [Описание]
+    🏛️ [Обект 2] - [Описание]
+    🍴 [Обяд] - [Описание]
+    📸 [Обект 3] - [Описание]
+    🌙 [Вечеря] - [Описание]`;
 
     try {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -63,12 +69,12 @@ async function generatePlan(e) {
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${O_KEY}` },
             body: JSON.stringify({
                 model: "gpt-4o",
-                messages: [{role: "system", content: "Ти си професионален гид. Всеки обект на нов ред с емоджи, име и описание."}, {role: "user", content: prompt}]
+                messages: [{role: "system", content: "Ти си премиум гид. Всеки обект на нов ред с емоджи, име и описание."}, {role: "user", content: prompt}]
             })
         });
         const data = await response.json();
         renderUI(dest, data.choices[0].message.content);
-    } catch (err) { alert("Грешка при връзка с AI!"); }
+    } catch (err) { alert("Грешка!"); }
     finally { document.getElementById('loader').classList.add('hidden'); }
 }
 
@@ -88,9 +94,9 @@ function renderUI(dest, md) {
             const name = l.split(':')[1].trim();
             const hotelUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest + " " + name)}&aid=701816`;
             hotelsHtml += `
-            <div class="bg-white p-4 rounded-2xl flex justify-between items-center border border-slate-100">
-                <div><p class="text-[8px] font-black text-blue-600 uppercase mb-0.5">Хотел</p><p class="font-bold text-slate-800 text-[11px]">${name}</p></div>
-                <a href="${hotelUrl}" target="_blank" class="bg-blue-600 text-white px-3 py-1.5 rounded-xl text-[9px] font-black uppercase shadow-md">Резервирай</a>
+            <div class="bg-white p-4 rounded-2xl flex justify-between items-center border border-slate-100 shadow-sm">
+                <div><p class="text-[8px] font-black text-blue-600 uppercase mb-0.5">Хотел</p><p class="font-bold text-slate-800 text-[11px] leading-tight">${name}</p></div>
+                <a href="${hotelUrl}" target="_blank" class="bg-blue-600 text-white px-3 py-1.5 rounded-xl text-[9px] font-black uppercase shadow-md flex-shrink-0">Резервирай</a>
             </div>`;
             hCount++;
         }
@@ -104,16 +110,16 @@ function renderUI(dest, md) {
             const desc = parts.slice(1).join(separator).trim();
             const cleanTitle = titleWithEmoji.replace(/[\u{1F300}-\u{1F9FF}]/u, '').trim();
             
-            // ФИКСИРАН ЛИНК - WayAway Affiliate Format
+            // ЛИНК С ТВОЯ МАРКЕР 701816
             const tpUrl = `https://wayaway.tp.st/search?marker=701816&query=${encodeURIComponent(dest + " " + cleanTitle)}&subid=itinerflai`;
             
             programHtml += `
             <div class="bg-white p-6 rounded-[2.5rem] shadow-md border border-slate-50 mb-4 flex justify-between items-center group" style="page-break-inside: avoid;">
                 <div class="flex flex-col pr-4">
                     <b class="text-slate-900 font-extrabold text-base block mb-1">${titleWithEmoji}</b>
-                    <p class="text-slate-500 text-[11px] leading-relaxed line-clamp-3">${desc}</p>
+                    <p class="text-slate-500 text-[11px] leading-relaxed">${desc}</p>
                 </div>
-                <a href="${tpUrl}" target="_blank" class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-blue-600 transition">
+                <a href="${tpUrl}" target="_blank" class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-blue-600 transition shadow-lg">
                     <i class="fas fa-external-link-alt text-sm"></i>
                 </a>
             </div>`;
@@ -121,9 +127,9 @@ function renderUI(dest, md) {
     });
 
     res.innerHTML = `
-        <div id="pdfArea" class="max-w-4xl mx-auto p-8 bg-white">
-            <div class="bg-slate-900 p-8 rounded-3xl text-white mb-10 flex justify-between items-center border-b-8 border-blue-600">
-                <div><h2 class="text-3xl font-black italic uppercase italic tracking-tighter">${dest}</h2><p class="text-[9px] opacity-50 uppercase tracking-widest font-bold">Premium Itinerary</p></div>
+        <div id="pdfArea" class="max-w-5xl mx-auto p-4 md:p-10 bg-white" style="border-radius: 0;">
+            <div class="bg-slate-900 p-8 rounded-[2.5rem] text-white mb-10 flex justify-between items-center border-b-[10px] border-blue-600">
+                <div><h2 class="text-3xl font-black italic uppercase tracking-tighter">${dest}</h2><p class="text-[9px] opacity-50 uppercase tracking-widest font-bold">Premium Itinerary</p></div>
                 <div class="flex gap-2" data-html2canvas-ignore="true">
                     <button onclick="saveToCloud('${dest}')" class="bg-emerald-500 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase shadow-lg">Запази</button>
                     <button onclick="saveToPDF('${dest}')" class="bg-blue-600 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase shadow-lg">PDF</button>
@@ -142,7 +148,7 @@ function renderUI(dest, md) {
 window.saveToPDF = function(n) {
     const el = document.getElementById('pdfArea');
     const opt = { 
-        margin: 10, 
+        margin: [5, 5, 5, 5], 
         filename: n + '_guide.pdf',
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
@@ -157,19 +163,20 @@ async function saveToCloud(dest) {
     
     const contentHtml = document.getElementById('pdfArea').innerHTML;
     
-    const { error } = await sbClient
-        .from('itineraries')
-        .insert([{ 
-            user_id: user.id, 
-            destination: dest, 
-            content: contentHtml 
-        }]);
+    try {
+        const { error } = await sbClient
+            .from('itineraries')
+            .insert([{ 
+                user_id: user.id, 
+                destination: dest, 
+                content: contentHtml 
+            }]);
 
-    if (error) {
-        console.error("Грешка при запис:", error);
-        alert("Грешка при запис в базата!");
-    } else {
+        if (error) throw error;
         alert("Програмата е запазена успешно! ✨");
+    } catch (err) {
+        console.error("Грешка:", err);
+        alert("Грешка при запис: " + err.message);
     }
 }
 
