@@ -43,19 +43,19 @@
             <div class="flex justify-center gap-8 text-blue-500/50">
                 <div class="flex flex-col items-center gap-2">
                     <i class="fas fa-map-marked-alt text-2xl"></i>
-                    <span class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Маршрути</span>
+                    <span class="text-[9px] text-slate-500 font-bold uppercase tracking-wider" data-i18n="icon-routes">Маршрути</span>
                 </div>
                 <div class="flex flex-col items-center gap-2">
                     <i class="fas fa-utensils text-2xl"></i>
-                    <span class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Ресторанти</span>
+                    <span class="text-[9px] text-slate-500 font-bold uppercase tracking-wider" data-i18n="icon-restaurants">Ресторанти</span>
                 </div>
                 <div class="flex flex-col items-center gap-2">
                     <i class="fas fa-hotel text-2xl"></i>
-                    <span class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Хотели</span>
+                    <span class="text-[9px] text-slate-500 font-bold uppercase tracking-wider" data-i18n="icon-hotels">Хотели</span>
                 </div>
                 <div class="flex flex-col items-center gap-2">
                     <i class="fas fa-camera-retro text-2xl"></i>
-                    <span class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Атракции</span>
+                    <span class="text-[9px] text-slate-500 font-bold uppercase tracking-wider" data-i18n="icon-attractions">Атракции</span>
                 </div>
             </div>
         </div>
@@ -68,7 +68,7 @@
                     <form id="planForm" class="space-y-4">
                         <div>
                             <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1" data-i18n="dest">Дестинация</label>
-                            <input type="text" id="destination" required class="w-full rounded-2xl border-slate-200 border p-4 text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="text" id="destination" required placeholder="напр. Париж, Лондон, Рим..." data-i18n-placeholder="dest-placeholder" class="w-full rounded-2xl border-slate-200 border p-4 text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
@@ -86,9 +86,9 @@
                             <div>
                                 <label class="text-[10px] font-black text-slate-400 uppercase block mb-1" data-i18n="style">Стил</label>
                                 <select id="travelStyle" class="w-full rounded-2xl border-slate-200 border p-4 bg-slate-50 text-sm font-bold outline-none">
-                                    <option value="balanced">Балансиран</option>
-                                    <option value="dynamic">Динамичен</option>
-                                    <option value="relaxed">Релаксиращ</option>
+                                    <option value="balanced" data-i18n-option="style-balanced">Балансиран</option>
+                                    <option value="dynamic" data-i18n-option="style-dynamic">Динамичен</option>
+                                    <option value="relaxed" data-i18n-option="style-relaxed">Релаксиращ</option>
                                 </select>
                             </div>
                             <div>
