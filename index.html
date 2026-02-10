@@ -21,14 +21,16 @@
 <body class="text-slate-800">
 
     <nav class="bg-white border-b p-4 sticky top-0 z-50">
-        <div class="container mx-auto flex justify-between items-center px-4">
-            <div class="flex gap-1 bg-slate-100 p-1 rounded-lg">
+        <div class="container mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0 px-4">
+            <div class="flex gap-1 bg-slate-100 p-1 rounded-lg order-1 sm:order-1">
                 <button onclick="setLanguage('bg')" id="lang-bg" class="px-4 py-1.5 text-[10px] font-bold rounded-md transition lang-active">BG</button>
                 <button onclick="setLanguage('en')" id="lang-en" class="px-4 py-1.5 text-[10px] font-bold rounded-md transition text-slate-500">EN</button>
             </div>
-            <h1 class="text-2xl font-black italic tracking-tighter cursor-pointer" onclick="location.reload()"><i class="fas fa-bolt text-blue-600"></i> ITINERF<span class="text-blue-600">LAI</span></h1>
-            <div id="userStatus" class="text-xs font-bold">
-                <button onclick="openModal()" data-i18n="login" class="bg-blue-600 text-white px-6 py-2 rounded-full uppercase tracking-widest hover:bg-blue-700 transition">Вход</button>
+            <h1 class="text-xl sm:text-2xl font-black italic tracking-tighter cursor-pointer order-2 sm:order-2" onclick="location.reload()">
+                <i class="fas fa-bolt text-blue-600"></i> ITINERF<span class="text-blue-600">LAI</span>
+            </h1>
+            <div id="userStatus" class="text-xs font-bold order-3 sm:order-3">
+                <button onclick="openModal()" data-i18n="login" class="bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-full uppercase tracking-widest hover:bg-blue-700 transition text-[10px] sm:text-xs">Вход</button>
             </div>
         </div>
     </nav>
@@ -38,8 +40,23 @@
             <span class="bg-blue-600/20 text-blue-400 text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-widest mb-6 inline-block" data-i18n="hero-tag">Бъдещето на пътуванията</span>
             <h2 class="text-4xl md:text-6xl font-black mb-6 tracking-tighter italic" data-i18n="hero-title">Твоят личен AI архитект</h2>
             <p class="text-slate-400 max-w-2xl mx-auto font-light text-lg mb-8" data-i18n="hero-desc">Създаваме перфектния план за теб само за секунди с ITINERFLAI.</p>
-            <div class="flex justify-center gap-8 text-blue-500/50 text-2xl">
-                <i class="fas fa-map-marked-alt"></i> <i class="fas fa-utensils"></i> <i class="fas fa-hotel"></i> <i class="fas fa-camera-retro"></i>
+            <div class="flex justify-center gap-8 text-blue-500/50">
+                <div class="flex flex-col items-center gap-2">
+                    <i class="fas fa-map-marked-alt text-2xl"></i>
+                    <span class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Маршрути</span>
+                </div>
+                <div class="flex flex-col items-center gap-2">
+                    <i class="fas fa-utensils text-2xl"></i>
+                    <span class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Ресторанти</span>
+                </div>
+                <div class="flex flex-col items-center gap-2">
+                    <i class="fas fa-hotel text-2xl"></i>
+                    <span class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Хотели</span>
+                </div>
+                <div class="flex flex-col items-center gap-2">
+                    <i class="fas fa-camera-retro text-2xl"></i>
+                    <span class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Атракции</span>
+                </div>
             </div>
         </div>
     </section>
