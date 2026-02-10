@@ -265,7 +265,7 @@ async function generatePlan(e) {
             })
         });
         const data = await response.json();
-        renderUI(dest, days, startDate, budgetAmount, currency, data.choices[0].message.content);
+        renderUI(dest, days, startDate, travelers, budgetAmount, currency, data.choices[0].message.content);
         
         // Ако потребителят НЕ е влязъл, маркираме че е генерирал програма
         if (!user) {
@@ -281,7 +281,7 @@ async function generatePlan(e) {
 /**
  * UI РЕНДЕРИРАНЕ: Превръщане на текста в HTML карти
  */
-function renderUI(dest, days, startDate, budgetAmount, currency, md) {
+function renderUI(dest, days, startDate, travelers, budgetAmount, currency, md) {
     const res = document.getElementById('result');
     let hotelsHtml = ""; let programHtml = ""; let hCount = 0;
     
@@ -385,13 +385,29 @@ function renderUI(dest, days, startDate, budgetAmount, currency, md) {
                             </div>
                         </div>
                     </div>
-                    <div id="actionButtons" class="flex gap-2" data-html2canvas-ignore="true">
-                        <button onclick="saveToCloud('${dest}')" class="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase shadow-lg transition">
-                            <i class="fas fa-bookmark mr-1"></i> Запази
-                        </button>
-                        <button id="pdfButton" onclick="handlePDFClick('${dest}')" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase shadow-lg transition">
-                            <i class="fas fa-file-pdf mr-1"></i> PDF
-                        </button>
+                    <div class="flex flex-col md:flex-row gap-2" data-html2canvas-ignore="true">
+                        <div id="actionButtons" class="flex gap-2">
+                            <button onclick="saveToCloud('${dest}')" class="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase shadow-lg transition">
+                                <i class="fas fa-bookmark mr-1"></i> Запази
+                            </button>
+                            <button id="pdfButton" onclick="handlePDFClick('${dest}')" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase shadow-lg transition">
+                                <i class="fas fa-file-pdf mr-1"></i> PDF
+                            </button>
+                        </div>
+                        <div id="shareButtons" class="flex gap-2 hidden">
+                            <button onclick="shareToFacebook('${dest}')" class="bg-[#1877F2] hover:bg-[#0d6efd] text-white p-3 rounded-2xl shadow-lg transition" title="Сподели във Facebook">
+                                <i class="fab fa-facebook-f text-sm"></i>
+                            </button>
+                            <button onclick="shareToTwitter('${dest}')" class="bg-[#1DA1F2] hover:bg-[#0d8bd9] text-white p-3 rounded-2xl shadow-lg transition" title="Сподели в X (Twitter)">
+                                <i class="fab fa-x-twitter text-sm"></i>
+                            </button>
+                            <button onclick="shareToLinkedIn('${dest}')" class="bg-[#0A66C2] hover:bg-[#004182] text-white p-3 rounded-2xl shadow-lg transition" title="Сподели в LinkedIn">
+                                <i class="fab fa-linkedin-in text-sm"></i>
+                            </button>
+                            <button onclick="shareViaCopy('${dest}')" class="bg-slate-700 hover:bg-slate-600 text-white p-3 rounded-2xl shadow-lg transition" title="Копирай линк">
+                                <i class="fas fa-link text-sm"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -421,13 +437,22 @@ function renderUI(dest, days, startDate, budgetAmount, currency, md) {
     res.classList.remove('hidden');
     res.scrollIntoView({ behavior: 'smooth' });
     
-    // Проверка за PDF бутона след рендериране
+    // Проверка за PDF бутона и share бутоните след рендериране
     checkUserForPDF().then(user => {
         const pdfBtn = document.getElementById('pdfButton');
-        if (pdfBtn && !user) {
-            pdfBtn.disabled = true;
-            pdfBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            pdfBtn.title = 'Влезте в профила си за да експортвате в PDF';
+        const shareButtons = document.getElementById('shareButtons');
+        
+        if (user) {
+            // Логнат потребител - показва share бутоните
+            if (shareButtons) shareButtons.classList.remove('hidden');
+        } else {
+            // Гост - disable PDF и скрива share бутоните
+            if (pdfBtn) {
+                pdfBtn.disabled = true;
+                pdfBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                pdfBtn.title = 'Влезте в профила си за да експортвате в PDF';
+            }
+            if (shareButtons) shareButtons.classList.add('hidden');
         }
     });
 }
@@ -498,43 +523,60 @@ window.saveToPDF = async function(n) {
             elem.style.display = 'block';
         });
         
+        // Клониране на елемента за да не се променя оригиналния
+        const clonedEl = el.cloneNode(true);
+        clonedEl.style.width = '210mm'; // A4 width
+        clonedEl.style.padding = '10mm';
+        document.body.appendChild(clonedEl);
+        
         const opt = {
-            margin: [12, 8, 12, 8],
+            margin: [10, 10, 10, 10],
             filename: `${n}_itinerary_${new Date().toISOString().split('T')[0]}.pdf`,
             image: { 
                 type: 'jpeg', 
-                quality: 0.96
+                quality: 0.98
             },
             html2canvas: { 
                 scale: 2,
                 useCORS: true,
                 logging: false,
                 letterRendering: true,
-                scrollY: -window.scrollY,
-                scrollX: 0,
-                windowWidth: el.scrollWidth,
-                windowHeight: el.scrollHeight,
-                backgroundColor: '#ffffff'
+                width: 794, // A4 width in pixels at 96 DPI
+                windowWidth: 794,
+                backgroundColor: '#ffffff',
+                onclone: function(clonedDoc) {
+                    const clonedElement = clonedDoc.getElementById('pdfArea');
+                    if (clonedElement) {
+                        clonedElement.style.maxWidth = '100%';
+                        clonedElement.style.width = '100%';
+                    }
+                }
             },
             jsPDF: { 
                 unit: 'mm', 
                 format: 'a4', 
                 orientation: 'portrait',
-                compress: true,
-                precision: 16
+                compress: true
             },
             pagebreak: { 
-                mode: ['avoid-all', 'css', 'legacy'],
+                mode: ['avoid-all', 'css'],
                 before: '.page-break-before',
                 after: '.page-break-after',
-                avoid: ['div', 'img']
+                avoid: ['.bg-white', 'div']
             }
         };
         
-        await html2pdf().set(opt).from(el).save();
+        await html2pdf().set(opt).from(clonedEl).save();
+        
+        // Премахване на клонирания елемент
+        document.body.removeChild(clonedEl);
         
         // Връщане на оригиналния вид
         ignoreElements.forEach(elem => {
+            elem.style.display = '';
+        });
+        
+        footerElements.forEach(elem => {
             elem.style.display = '';
         });
         
@@ -627,5 +669,48 @@ window.setLanguage = function(lang) {
     document.getElementById('lang-' + lang).classList.add('lang-active');
     document.getElementById('lang-' + lang).classList.remove('text-slate-500');
     
-    // Тук можете да добавите логика за превод
+    // TODO: Имплементация на превод
+    if (lang === 'en') {
+        alert('English translation is coming soon! 🌍\n\nОще не е налична английската версия.');
+    }
+};
+
+/**
+ * ФУНКЦИИ ЗА СПОДЕЛЯНЕ
+ */
+window.shareToFacebook = function(dest) {
+    const url = encodeURIComponent(window.location.href);
+    const text = encodeURIComponent(`Вижте моята пътна програма за ${dest}! 🌍✨`);
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${text}`, '_blank', 'width=600,height=400');
+};
+
+window.shareToTwitter = function(dest) {
+    const url = encodeURIComponent(window.location.href);
+    const text = encodeURIComponent(`Вижте моята пътна програма за ${dest} създадена с ITINERFLAI! 🌍✨`);
+    window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank', 'width=600,height=400');
+};
+
+window.shareToLinkedIn = function(dest) {
+    const url = encodeURIComponent(window.location.href);
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank', 'width=600,height=400');
+};
+
+window.shareViaCopy = function(dest) {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+        // Показване на success съобщение
+        const btn = event.target.closest('button');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check text-sm"></i>';
+        btn.classList.add('bg-green-600');
+        btn.classList.remove('bg-slate-700');
+        
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.classList.remove('bg-green-600');
+            btn.classList.add('bg-slate-700');
+        }, 2000);
+    }).catch(err => {
+        alert('Грешка при копиране на линка!');
+    });
 };
