@@ -123,19 +123,21 @@ async function loadUserItineraries() {
 
     if (data && data.length > 0) {
         container.innerHTML = data.map(item => `
-            <div class="bg-slate-900/50 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between group hover:border-blue-500 transition h-full">
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 p-5 rounded-2xl flex flex-col justify-between group hover:border-blue-500 hover:shadow-xl hover:shadow-blue-500/20 transition-all h-full">
                 <div class="mb-4">
-                    <h5 class="text-white font-bold text-base uppercase tracking-tight mb-2">${item.destination}</h5>
-                    <p class="text-[9px] text-slate-500">
-                        <i class="fas fa-calendar-alt mr-1"></i>
-                        ${new Date(item.created_at).toLocaleDateString('bg-BG')}
-                    </p>
+                    <h5 class="text-white font-bold text-base uppercase tracking-tight mb-3">${item.destination}</h5>
+                    <div class="inline-flex items-center gap-2 bg-blue-600/20 px-3 py-1.5 rounded-lg border border-blue-500/30">
+                        <i class="fas fa-calendar-alt text-blue-400 text-[10px]"></i>
+                        <p class="text-[10px] text-blue-300 font-semibold">
+                            ${new Date(item.created_at).toLocaleDateString('bg-BG')}
+                        </p>
+                    </div>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="viewSaved('${item.id}')" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-blue-500 transition">
+                    <button onclick="viewSaved('${item.id}')" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-blue-500 transition shadow-lg">
                         <i class="fas fa-eye mr-1"></i> Преглед
                     </button>
-                    <button onclick="deleteSaved('${item.id}')" class="bg-red-500/20 text-red-400 p-2 px-3 rounded-xl text-[10px] hover:bg-red-500 hover:text-white transition">
+                    <button onclick="deleteSaved('${item.id}')" class="bg-red-500/20 text-red-400 p-2 px-3 rounded-xl text-[10px] hover:bg-red-500 hover:text-white transition border border-red-500/30">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -303,7 +305,7 @@ function renderUI(dest, days, startDate, travelers, budgetAmount, currency, md) 
                         <p class="font-bold text-slate-800 text-[12px] leading-tight mb-1">${name}</p>
                         ${desc ? `<p class="text-[9px] text-slate-500 leading-snug">${desc}</p>` : ''}
                     </div>
-                    <a href="${hotelUrl}" target="_blank" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase shadow-md block text-center hover:bg-blue-700 transition" data-html2canvas-ignore="true">
+                    <a href="${hotelUrl}" target="_blank" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase shadow-md block text-center hover:bg-blue-700 transition">
                         Резервирай в Booking.com
                     </a>
                 </div>`;
@@ -339,7 +341,7 @@ function renderUI(dest, days, startDate, travelers, budgetAmount, currency, md) 
                             <b class="text-slate-900 font-extrabold text-base block mb-1 tracking-tight">${title}</b>
                             <p class="text-slate-500 text-[11px] leading-relaxed line-clamp-2">${desc}</p>
                         </div>
-                        <a href="${linkUrl}" target="_blank" class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center flex-shrink-0 shadow-lg group-hover:bg-blue-600 transition" data-html2canvas-ignore="true">
+                        <a href="${linkUrl}" target="_blank" class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center flex-shrink-0 shadow-lg group-hover:bg-blue-600 transition">
                             <i class="fas fa-${isRestaurant ? 'utensils' : 'map-marker-alt'} text-sm"></i>
                         </a>
                     </div>`;
@@ -408,7 +410,7 @@ function renderUI(dest, days, startDate, travelers, budgetAmount, currency, md) 
                                 <i class="fab fa-facebook-f text-sm"></i>
                             </button>
                             <button onclick="shareToTwitter('${dest}')" class="bg-[#1DA1F2] hover:bg-[#0d8bd9] text-white p-3 rounded-2xl shadow-lg transition" title="Сподели в X (Twitter)">
-                                <i class="fab fa-x-twitter text-sm"></i>
+                                <i class="fab fa-twitter text-sm"></i>
                             </button>
                             <button onclick="shareToLinkedIn('${dest}')" class="bg-[#0A66C2] hover:bg-[#004182] text-white p-3 rounded-2xl shadow-lg transition" title="Сподели в LinkedIn">
                                 <i class="fab fa-linkedin-in text-sm"></i>
@@ -671,7 +673,50 @@ window.closeModal = function() {
 /**
  * ЕЗИКОВА ФУНКЦИЯ
  */
+let currentLanguage = 'bg';
+
+const translations = {
+    bg: {
+        'hero-tag': 'Бъдещето на пътуванията',
+        'hero-title': 'Твоят личен AI архитект',
+        'hero-desc': 'Създаваме перфектния план за теб само за секунди с ITINERFLAI.',
+        'dest': 'Дестинация',
+        'date': 'Начална дата',
+        'days': 'Дни',
+        'style': 'Стил',
+        'travelers': 'Пътуващи',
+        'budget': 'Бюджет',
+        'currency': 'Валута',
+        'btn-generate': 'Генерирай план',
+        'login': 'Вход',
+        'my-trips': 'Моите запазени програми',
+        'loading': 'AI планира...',
+        'benefits-title': 'Защо да се регистрирам?',
+        'benefits-desc': 'Отключи пълния потенциал на ITINERFLAI'
+    },
+    en: {
+        'hero-tag': 'The Future of Travel',
+        'hero-title': 'Your Personal AI Architect',
+        'hero-desc': 'We create the perfect plan for you in seconds with ITINERFLAI.',
+        'dest': 'Destination',
+        'date': 'Start Date',
+        'days': 'Days',
+        'style': 'Style',
+        'travelers': 'Travelers',
+        'budget': 'Budget',
+        'currency': 'Currency',
+        'btn-generate': 'Generate Plan',
+        'login': 'Login',
+        'my-trips': 'My Saved Itineraries',
+        'loading': 'AI is planning...',
+        'benefits-title': 'Why register?',
+        'benefits-desc': 'Unlock the full potential of ITINERFLAI'
+    }
+};
+
 window.setLanguage = function(lang) {
+    currentLanguage = lang;
+    
     // Промяна на активния език
     document.querySelectorAll('[id^="lang-"]').forEach(btn => {
         btn.classList.remove('lang-active');
@@ -680,10 +725,13 @@ window.setLanguage = function(lang) {
     document.getElementById('lang-' + lang).classList.add('lang-active');
     document.getElementById('lang-' + lang).classList.remove('text-slate-500');
     
-    // TODO: Имплементация на превод
-    if (lang === 'en') {
-        alert('English translation is coming soon! 🌍\n\nОще не е налична английската версия.');
-    }
+    // Прилагане на преводите
+    document.querySelectorAll('[data-i18n]').forEach(elem => {
+        const key = elem.getAttribute('data-i18n');
+        if (translations[lang][key]) {
+            elem.textContent = translations[lang][key];
+        }
+    });
 };
 
 /**
@@ -708,20 +756,57 @@ window.shareToLinkedIn = function(dest) {
 
 window.shareViaCopy = function(dest) {
     const url = window.location.href;
-    navigator.clipboard.writeText(url).then(() => {
-        // Показване на success съобщение
-        const btn = event.target.closest('button');
-        const originalHTML = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-check text-sm"></i>';
-        btn.classList.add('bg-green-600');
-        btn.classList.remove('bg-slate-700');
-        
-        setTimeout(() => {
-            btn.innerHTML = originalHTML;
-            btn.classList.remove('bg-green-600');
-            btn.classList.add('bg-slate-700');
-        }, 2000);
-    }).catch(err => {
-        alert('Грешка при копиране на линка!');
-    });
+    
+    // Модерен начин за копиране
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+            // Показване на success съобщение
+            const btn = document.querySelector('[onclick*="shareViaCopy"]');
+            if (btn) {
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check text-sm"></i>';
+                btn.classList.add('bg-green-600');
+                btn.classList.remove('bg-slate-700');
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.classList.remove('bg-green-600');
+                    btn.classList.add('bg-slate-700');
+                }, 2000);
+            }
+        }).catch(err => {
+            // Fallback метод
+            copyTextFallback(url);
+        });
+    } else {
+        // Fallback за стари браузъри
+        copyTextFallback(url);
+    }
 };
+
+function copyTextFallback(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+        document.execCommand('copy');
+        const btn = document.querySelector('[onclick*="shareViaCopy"]');
+        if (btn) {
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check text-sm"></i>';
+            btn.classList.add('bg-green-600');
+            btn.classList.remove('bg-slate-700');
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.classList.remove('bg-green-600');
+                btn.classList.add('bg-slate-700');
+            }, 2000);
+        }
+    } catch (err) {
+        alert('Моля копирайте линка ръчно: ' + text);
+    }
+    document.body.removeChild(textArea);
+}
