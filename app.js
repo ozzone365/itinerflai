@@ -354,6 +354,13 @@ function renderUI(dest, days, startDate, travelers, budgetAmount, currency, md) 
                     <p class="text-slate-900 font-bold text-sm">${l}</p>
                 </div>`;
         }
+        // Още един fallback за всички останали редове (ако не са хотел или ден)
+        else if (!upper.startsWith('ХОТЕЛ') && !upper.includes('ДЕН') && l.length > 0) {
+            programHtml += `
+                <div class="bg-white p-5 rounded-[2.5rem] shadow-md border border-slate-50 mb-4" style="page-break-inside: avoid;">
+                    <p class="text-slate-900 font-bold text-sm">${l}</p>
+                </div>`;
+        }
     });
 
     // Проверка дали потребителят е влязъл за PDF бутона
@@ -409,8 +416,8 @@ function renderUI(dest, days, startDate, travelers, budgetAmount, currency, md) 
                             <button onclick="shareToFacebook('${dest}')" class="bg-[#1877F2] hover:bg-[#0d6efd] text-white p-3 rounded-2xl shadow-lg transition" title="Сподели във Facebook">
                                 <i class="fab fa-facebook-f text-sm"></i>
                             </button>
-                            <button onclick="shareToTwitter('${dest}')" class="bg-[#1DA1F2] hover:bg-[#0d8bd9] text-white p-3 rounded-2xl shadow-lg transition" title="Сподели в X (Twitter)">
-                                <i class="fab fa-twitter text-sm"></i>
+                            <button onclick="shareToTwitter('${dest}')" class="bg-black hover:bg-gray-800 text-white p-3 rounded-2xl shadow-lg transition" title="Сподели в X">
+                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                             </button>
                             <button onclick="shareToLinkedIn('${dest}')" class="bg-[#0A66C2] hover:bg-[#004182] text-white p-3 rounded-2xl shadow-lg transition" title="Сподели в LinkedIn">
                                 <i class="fab fa-linkedin-in text-sm"></i>
@@ -681,9 +688,13 @@ const translations = {
         'hero-title': 'Твоят личен AI архитект',
         'hero-desc': 'Създаваме перфектния план за теб само за секунди с ITINERFLAI.',
         'dest': 'Дестинация',
+        'dest-placeholder': 'напр. Париж, Лондон, Рим...',
         'date': 'Начална дата',
         'days': 'Дни',
         'style': 'Стил',
+        'style-balanced': 'Балансиран',
+        'style-dynamic': 'Динамичен',
+        'style-relaxed': 'Релаксиращ',
         'travelers': 'Пътуващи',
         'budget': 'Бюджет',
         'currency': 'Валута',
@@ -692,16 +703,24 @@ const translations = {
         'my-trips': 'Моите запазени програми',
         'loading': 'AI планира...',
         'benefits-title': 'Защо да се регистрирам?',
-        'benefits-desc': 'Отключи пълния потенциал на ITINERFLAI'
+        'benefits-desc': 'Отключи пълния потенциал на ITINERFLAI',
+        'icon-routes': 'Маршрути',
+        'icon-restaurants': 'Ресторанти',
+        'icon-hotels': 'Хотели',
+        'icon-attractions': 'Атракции'
     },
     en: {
         'hero-tag': 'The Future of Travel',
         'hero-title': 'Your Personal AI Architect',
         'hero-desc': 'We create the perfect plan for you in seconds with ITINERFLAI.',
         'dest': 'Destination',
+        'dest-placeholder': 'e.g. Paris, London, Rome...',
         'date': 'Start Date',
         'days': 'Days',
         'style': 'Style',
+        'style-balanced': 'Balanced',
+        'style-dynamic': 'Dynamic',
+        'style-relaxed': 'Relaxed',
         'travelers': 'Travelers',
         'budget': 'Budget',
         'currency': 'Currency',
@@ -710,7 +729,11 @@ const translations = {
         'my-trips': 'My Saved Itineraries',
         'loading': 'AI is planning...',
         'benefits-title': 'Why register?',
-        'benefits-desc': 'Unlock the full potential of ITINERFLAI'
+        'benefits-desc': 'Unlock the full potential of ITINERFLAI',
+        'icon-routes': 'Routes',
+        'icon-restaurants': 'Restaurants',
+        'icon-hotels': 'Hotels',
+        'icon-attractions': 'Attractions'
     }
 };
 
@@ -728,6 +751,22 @@ window.setLanguage = function(lang) {
     // Прилагане на преводите
     document.querySelectorAll('[data-i18n]').forEach(elem => {
         const key = elem.getAttribute('data-i18n');
+        if (translations[lang][key]) {
+            elem.textContent = translations[lang][key];
+        }
+    });
+    
+    // Превод на placeholder текстове
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(elem => {
+        const key = elem.getAttribute('data-i18n-placeholder');
+        if (translations[lang][key]) {
+            elem.placeholder = translations[lang][key];
+        }
+    });
+    
+    // Превод на option елементи
+    document.querySelectorAll('[data-i18n-option]').forEach(elem => {
+        const key = elem.getAttribute('data-i18n-option');
         if (translations[lang][key]) {
             elem.textContent = translations[lang][key];
         }
