@@ -313,34 +313,43 @@ function renderUI(dest, days, startDate, travelers, budgetAmount, currency, md) 
             const dayNum = l.match(/\d+/)?.[0] || '';
             programHtml += `<div class="text-2xl font-black text-slate-900 border-b-4 border-blue-600/20 mt-10 mb-6 uppercase italic pb-1" style="page-break-before: auto; page-break-after: avoid;">${l}</div>`;
         }
-        // Проверка дали редът съдържа емоджи ИЛИ ключови думи (ЗАКУСКА, ОБЯД, ВЕЧЕРЯ)
-        else if (/[\u{1F300}-\u{1F9FF}]/u.test(l) || upper.includes('ЗАКУСКА:') || upper.includes('ОБЯД:') || upper.includes('ВЕЧЕРЯ:')) {
-            const parts = l.split('-'); 
-            const title = parts[0].trim(); 
-            const desc = parts[1] ? parts[1].trim() : "";
-            const cleanTitle = title.replace(/[\u{1F300}-\u{1F9FF}]/ug, '').replace(/ЗАКУСКА:|ОБЯД:|ВЕЧЕРЯ:/gi, '').trim();
-            
-            // Проверка за тип заведение
-            const isRestaurant = upper.includes('ЗАКУСКА') || upper.includes('ОБЯД') || upper.includes('ВЕЧЕРЯ');
-            
-            let linkUrl;
-            if (isRestaurant) {
-                // Booking.com линк за ресторанти
-                linkUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest + " " + cleanTitle)}&aid=701816`;
-            } else {
-                // Google Maps за забележителности
-                linkUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest + " " + cleanTitle)}`;
+        // Обработка на редове с разделител "-"
+        else if (l.includes('-')) {
+            const parts = l.split('-');
+            if (parts.length >= 2) {
+                const title = parts[0].trim(); 
+                const desc = parts.slice(1).join('-').trim(); // Взима всичко след първия "-"
+                const cleanTitle = title.replace(/[\u{1F300}-\u{1F9FF}]/ug, '').replace(/ЗАКУСКА:|ОБЯД:|ВЕЧЕРЯ:/gi, '').trim();
+                
+                // Проверка за тип заведение
+                const isRestaurant = upper.includes('ЗАКУСКА') || upper.includes('ОБЯД') || upper.includes('ВЕЧЕРЯ');
+                
+                let linkUrl;
+                if (isRestaurant) {
+                    // Booking.com линк за ресторанти
+                    linkUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest + " " + cleanTitle)}&aid=701816`;
+                } else {
+                    // Google Maps за забележителности
+                    linkUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest + " " + cleanTitle)}`;
+                }
+                
+                programHtml += `
+                    <div class="bg-white p-5 rounded-[2.5rem] shadow-md border border-slate-50 mb-4 flex justify-between items-center group transition hover:border-blue-200" style="page-break-inside: avoid;">
+                        <div class="flex flex-col pr-4 flex-1">
+                            <b class="text-slate-900 font-extrabold text-base block mb-1 tracking-tight">${title}</b>
+                            <p class="text-slate-500 text-[11px] leading-relaxed line-clamp-2">${desc}</p>
+                        </div>
+                        <a href="${linkUrl}" target="_blank" class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center flex-shrink-0 shadow-lg group-hover:bg-blue-600 transition" data-html2canvas-ignore="true">
+                            <i class="fas fa-${isRestaurant ? 'utensils' : 'map-marker-alt'} text-sm"></i>
+                        </a>
+                    </div>`;
             }
-            
+        }
+        // Fallback за редове без "-" но с емоджи
+        else if (/[\u{1F300}-\u{1F9FF}]/u.test(l)) {
             programHtml += `
-                <div class="bg-white p-5 rounded-[2.5rem] shadow-md border border-slate-50 mb-4 flex justify-between items-center group transition hover:border-blue-200" style="page-break-inside: avoid;">
-                    <div class="flex flex-col pr-4">
-                        <b class="text-slate-900 font-extrabold text-base block mb-0.5 tracking-tight">${title}</b>
-                        <p class="text-slate-500 text-[11px] leading-relaxed line-clamp-2">${desc}</p>
-                    </div>
-                    <a href="${linkUrl}" target="_blank" class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center flex-shrink-0 shadow-lg group-hover:bg-blue-600 transition" data-html2canvas-ignore="true">
-                        <i class="fas fa-${isRestaurant ? 'utensils' : 'map-marker-alt'} text-sm"></i>
-                    </a>
+                <div class="bg-white p-5 rounded-[2.5rem] shadow-md border border-slate-50 mb-4" style="page-break-inside: avoid;">
+                    <p class="text-slate-900 font-bold text-sm">${l}</p>
                 </div>`;
         }
     });
@@ -511,46 +520,42 @@ window.saveToPDF = async function(n) {
     document.body.appendChild(loadingDiv);
     
     try {
-        // Премахване на data-html2canvas-ignore атрибутите временно
+        // Премахване на data-html2canvas-ignore атрибутите
         const ignoreElements = el.querySelectorAll('[data-html2canvas-ignore]');
         ignoreElements.forEach(elem => {
+            elem.dataset.originalDisplay = elem.style.display;
             elem.style.display = 'none';
         });
         
         // Показване на footer
         const footerElements = el.querySelectorAll('[data-html2canvas-show]');
         footerElements.forEach(elem => {
+            elem.dataset.originalDisplay = elem.style.display || '';
             elem.style.display = 'block';
         });
         
-        // Клониране на елемента за да не се променя оригиналния
-        const clonedEl = el.cloneNode(true);
-        clonedEl.style.width = '210mm'; // A4 width
-        clonedEl.style.padding = '10mm';
-        document.body.appendChild(clonedEl);
+        // Премахване на line-clamp за пълен текст
+        const clampedElements = el.querySelectorAll('.line-clamp-2');
+        clampedElements.forEach(elem => {
+            elem.classList.remove('line-clamp-2');
+            elem.dataset.hadClamp = 'true';
+        });
         
         const opt = {
-            margin: [10, 10, 10, 10],
-            filename: `${n}_itinerary_${new Date().toISOString().split('T')[0]}.pdf`,
+            margin: [15, 12, 15, 12],
+            filename: `ITINERFLAI_${n}_${new Date().toISOString().split('T')[0]}.pdf`,
             image: { 
                 type: 'jpeg', 
-                quality: 0.98
+                quality: 0.95
             },
             html2canvas: { 
-                scale: 2,
+                scale: 2.5,
                 useCORS: true,
                 logging: false,
                 letterRendering: true,
-                width: 794, // A4 width in pixels at 96 DPI
-                windowWidth: 794,
+                allowTaint: false,
                 backgroundColor: '#ffffff',
-                onclone: function(clonedDoc) {
-                    const clonedElement = clonedDoc.getElementById('pdfArea');
-                    if (clonedElement) {
-                        clonedElement.style.maxWidth = '100%';
-                        clonedElement.style.width = '100%';
-                    }
-                }
+                imageTimeout: 15000
             },
             jsPDF: { 
                 unit: 'mm', 
@@ -559,25 +564,31 @@ window.saveToPDF = async function(n) {
                 compress: true
             },
             pagebreak: { 
-                mode: ['avoid-all', 'css'],
-                before: '.page-break-before',
-                after: '.page-break-after',
-                avoid: ['.bg-white', 'div']
+                mode: ['avoid-all', 'css', 'legacy'],
+                before: [],
+                after: [],
+                avoid: ['img', '.bg-white', '.rounded-2xl', '.rounded-\\[2\\.5rem\\]', '.shadow-md']
             }
         };
         
-        await html2pdf().set(opt).from(clonedEl).save();
-        
-        // Премахване на клонирания елемент
-        document.body.removeChild(clonedEl);
+        await html2pdf().set(opt).from(el).save();
         
         // Връщане на оригиналния вид
         ignoreElements.forEach(elem => {
-            elem.style.display = '';
+            elem.style.display = elem.dataset.originalDisplay || '';
+            delete elem.dataset.originalDisplay;
         });
         
         footerElements.forEach(elem => {
-            elem.style.display = '';
+            elem.style.display = elem.dataset.originalDisplay || '';
+            delete elem.dataset.originalDisplay;
+        });
+        
+        clampedElements.forEach(elem => {
+            if (elem.dataset.hadClamp) {
+                elem.classList.add('line-clamp-2');
+                delete elem.dataset.hadClamp;
+            }
         });
         
         // Премахване на loading индикатор с успех съобщение
