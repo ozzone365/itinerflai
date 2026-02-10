@@ -1,5 +1,8 @@
 let S_URL, S_KEY, O_KEY, sbClient;
 
+// Глобална променлива за текущия език
+let currentLanguage = 'bg';
+
 /**
  * ИНИЦИАЛИЗАЦИЯ: Извличане на ключовете от защитен API ендпоинт
  */
@@ -217,8 +220,45 @@ async function generatePlan(e) {
     };
     
     const travelStyleBG = styleMap[travelStyle] || 'балансиран';
+    
+    // Избор на език за AI промпт
+    const isEnglish = currentLanguage === 'en';
+    
+    const prompt = isEnglish ? 
+    `Create a professional travel plan for ${dest} in ENGLISH with the following parameters:
 
-    const prompt = `Създай професионален туристически план за ${dest} на БЪЛГАРСКИ език със следните параметри:
+📍 Destination: ${dest}
+📅 Duration: ${days} days (starting ${startDate})
+👥 Number of travelers: ${travelers} people
+💰 Budget: ${budgetAmount} ${currency} per person
+🎯 Travel style: ${styleMap[travelStyle] || 'balanced'}
+
+STRUCTURE (NO # OR * SYMBOLS):
+
+HOTEL: [Hotel name] - [Brief description]
+(Suggest 4 different hotels suitable for the budget)
+
+DAY 1:
+☕ BREAKFAST: [Cafe/restaurant name] - [Description and specialty]
+🏛️ [Attraction 1] - [Description]
+🏛️ [Attraction 2] - [Description]
+🍴 LUNCH: [Restaurant name] - [Description and recommended dish]
+📸 [Attraction 3] - [Description]
+📸 [Attraction 4] - [Description]
+🌙 DINNER: [Restaurant name] - [Description]
+
+(Repeat structure for each day)
+
+IMPORTANT:
+- All venues must be REAL and existing in ${dest}
+- All descriptions should be specific and useful
+- Consider the budget of ${budgetAmount} ${currency} per person
+- Follow the "${styleMap[travelStyle]}" style
+- For ${travelers} people
+- Each place on a NEW line
+- Emojis only at the beginning of the line`
+    :
+    `Създай професионален туристически план за ${dest} на БЪЛГАРСКИ език със следните параметри:
 
 📍 Дестинация: ${dest}
 📅 Продължителност: ${days} дни (от ${startDate})
@@ -250,6 +290,10 @@ async function generatePlan(e) {
 - За ${travelers} души
 - Всяко място на НОВА линия
 - Емоджи само в началото на реда`;
+    
+    const systemMessage = isEnglish ?
+        "You are an expert travel guide who creates detailed and personalized travel programs. Respond exactly according to the given structure, with real places and specific recommendations." :
+        "Ти си експертен туристически гид, който създава детайлни и персонализирани пътни програми. Отговаряй точно по зададената структура, с реални места и конкретни препоръки.";
 
     try {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -261,7 +305,7 @@ async function generatePlan(e) {
             body: JSON.stringify({
                 model: "gpt-4o",
                 messages: [
-                    {role: "system", content: "Ти си експертен туристически гид, който създава детайлни и персонализирани пътни програми. Отговаряй точно по зададената структура, с реални места и конкретни препоръки."},
+                    {role: "system", content: systemMessage},
                     {role: "user", content: prompt}
                 ]
             })
@@ -293,7 +337,7 @@ function renderUI(dest, days, startDate, travelers, budgetAmount, currency, md) 
         const l = line.trim(); 
         const upper = l.toUpperCase();
         
-        if (upper.startsWith('ХОТЕЛ:') && hCount < 4) {
+        if ((upper.startsWith('ХОТЕЛ:') || upper.startsWith('HOTEL:')) && hCount < 4) {
             const parts = l.split(':')[1].trim().split('-');
             const name = parts[0].trim();
             const desc = parts[1] ? parts[1].trim() : "";
@@ -311,7 +355,7 @@ function renderUI(dest, days, startDate, travelers, budgetAmount, currency, md) 
                 </div>`;
             hCount++;
         }
-        else if (upper.includes('ДЕН')) {
+        else if (upper.includes('ДЕН') || upper.includes('DAY')) {
             const dayNum = l.match(/\d+/)?.[0] || '';
             programHtml += `<div class="text-2xl font-black text-slate-900 border-b-4 border-blue-600/20 mt-10 mb-6 uppercase italic pb-1" style="page-break-before: auto; page-break-after: avoid;">${l}</div>`;
         }
@@ -324,7 +368,8 @@ function renderUI(dest, days, startDate, travelers, budgetAmount, currency, md) 
                 const cleanTitle = title.replace(/[\u{1F300}-\u{1F9FF}]/ug, '').replace(/ЗАКУСКА:|ОБЯД:|ВЕЧЕРЯ:/gi, '').trim();
                 
                 // Проверка за тип заведение
-                const isRestaurant = upper.includes('ЗАКУСКА') || upper.includes('ОБЯД') || upper.includes('ВЕЧЕРЯ');
+                const isRestaurant = upper.includes('ЗАКУСКА') || upper.includes('ОБЯД') || upper.includes('ВЕЧЕРЯ') ||
+                                    upper.includes('BREAKFAST') || upper.includes('LUNCH') || upper.includes('DINNER');
                 
                 let linkUrl;
                 if (isRestaurant) {
@@ -349,16 +394,33 @@ function renderUI(dest, days, startDate, travelers, budgetAmount, currency, md) 
         }
         // Fallback за редове без "-" но с емоджи
         else if (/[\u{1F300}-\u{1F9FF}]/u.test(l)) {
+            const cleanTitle = l.replace(/[\u{1F300}-\u{1F9FF}]/ug, '').trim();
+            const linkUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest + " " + cleanTitle)}`;
+            
             programHtml += `
-                <div class="bg-white p-5 rounded-[2.5rem] shadow-md border border-slate-50 mb-4" style="page-break-inside: avoid;">
-                    <p class="text-slate-900 font-bold text-sm">${l}</p>
+                <div class="bg-white p-5 rounded-[2.5rem] shadow-md border border-slate-50 mb-4 flex justify-between items-center group transition hover:border-blue-200" style="page-break-inside: avoid;">
+                    <div class="flex flex-col pr-4 flex-1">
+                        <b class="text-slate-900 font-extrabold text-base block mb-1 tracking-tight">${l}</b>
+                    </div>
+                    <a href="${linkUrl}" target="_blank" class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center flex-shrink-0 shadow-lg group-hover:bg-blue-600 transition">
+                        <i class="fas fa-map-marker-alt text-sm"></i>
+                    </a>
                 </div>`;
         }
         // Още един fallback за всички останали редове (ако не са хотел или ден)
-        else if (!upper.startsWith('ХОТЕЛ') && !upper.includes('ДЕН') && l.length > 0) {
+        else if (!upper.startsWith('ХОТЕЛ') && !upper.startsWith('HOTEL') && 
+                 !upper.includes('ДЕН') && !upper.includes('DAY') && 
+                 l.length > 10) {
+            const linkUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest + " " + l)}`;
+            
             programHtml += `
-                <div class="bg-white p-5 rounded-[2.5rem] shadow-md border border-slate-50 mb-4" style="page-break-inside: avoid;">
-                    <p class="text-slate-900 font-bold text-sm">${l}</p>
+                <div class="bg-white p-5 rounded-[2.5rem] shadow-md border border-slate-50 mb-4 flex justify-between items-center group transition hover:border-blue-200" style="page-break-inside: avoid;">
+                    <div class="flex flex-col pr-4 flex-1">
+                        <b class="text-slate-900 font-extrabold text-base block mb-1 tracking-tight">${l}</b>
+                    </div>
+                    <a href="${linkUrl}" target="_blank" class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center flex-shrink-0 shadow-lg group-hover:bg-blue-600 transition">
+                        <i class="fas fa-map-marker-alt text-sm"></i>
+                    </a>
                 </div>`;
         }
     });
@@ -680,8 +742,6 @@ window.closeModal = function() {
 /**
  * ЕЗИКОВА ФУНКЦИЯ
  */
-let currentLanguage = 'bg';
-
 const translations = {
     bg: {
         'hero-tag': 'Бъдещето на пътуванията',
