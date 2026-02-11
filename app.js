@@ -345,6 +345,9 @@ function renderUI(dest, days, startDate, travelers, budgetAmount, currency, md) 
         if (l.startsWith('(') || l.startsWith('[') || 
             upper.includes('ПРЕДЛОЖИ') || upper.includes('SUGGEST') || 
             upper.includes('ПОВТОРИ') || upper.includes('REPEAT') ||
+            upper.includes('ВАЖНО') || upper.includes('IMPORTANT') ||
+            upper.includes('СТРУКТУРА') || upper.includes('STRUCTURE') ||
+            upper.startsWith('**') || // Markdown bold
             l.length <= 3) {
             return; // Пропусни този ред
         }
@@ -368,8 +371,9 @@ function renderUI(dest, days, startDate, travelers, budgetAmount, currency, md) 
                 </div>`;
             hCount++;
         }
-        // 2. ЗАГЛАВИЯ НА ДНИ
-        else if (upper.includes('ДЕН') || upper.includes('DAY')) {
+        // 2. ЗАГЛАВИЯ НА ДНИ (само ако започва с "ДЕН" или "DAY" или има само "ДЕН X:")
+        else if ((upper.startsWith('ДЕН') || upper.startsWith('DAY')) && 
+                 (l.match(/^(ДЕН|DAY)\s*\d+/i) || l.length < 20)) {
             programHtml += `<div class="text-2xl font-black text-slate-900 border-b-4 border-blue-600/20 mt-10 mb-6 uppercase italic pb-1" style="page-break-before: auto; page-break-after: avoid;">${l}</div>`;
         }
         // 3. ВСИЧКО ДРУГО СТАВА КАРТА
@@ -482,7 +486,7 @@ function renderUI(dest, days, startDate, travelers, budgetAmount, currency, md) 
                 <h4 class="text-[10px] font-black text-slate-400 mb-4 uppercase tracking-[0.2em] italic border-l-4 border-blue-500 pl-3">
                     <i class="fas fa-hotel mr-2"></i>Препоръчани настанявания
                 </h4>
-                <div class="space-y-3">${hotelsHtml}</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${hotelsHtml}</div>
             </div>
             
             <!-- Програма -->
