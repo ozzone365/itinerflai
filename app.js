@@ -18,8 +18,18 @@ async function init() {
 
         if (window.supabase && !sbClient) {
             sbClient = window.supabase.createClient(S_URL, S_KEY);
-            setupAuth();
-            checkUser();
+            
+            // Изчакваме DOM да е зареден преди да setup-ваме auth
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    setupAuth();
+                    checkUser();
+                });
+            } else {
+                // DOM вече е зареден
+                setupAuth();
+                checkUser();
+            }
         }
     } catch (e) {
         console.error("Грешка при инициализация:", e);
@@ -727,11 +737,6 @@ async function saveToCloud(dest) {
 document.addEventListener('DOMContentLoaded', () => {
     const f = document.getElementById('planForm');
     if (f) f.onsubmit = generatePlan;
-    
-    // Инициализация на auth след като DOM е зареден
-    if (sbClient) {
-        setupAuth();
-    }
     
     // Затваряне на модала при клик извън него
     window.onclick = function(event) {
