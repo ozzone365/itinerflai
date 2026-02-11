@@ -256,7 +256,9 @@ IMPORTANT:
 - Follow the "${styleMap[travelStyle]}" style
 - For ${travelers} people
 - Each place on a NEW line
-- Emojis only at the beginning of the line`
+- Emojis only at the beginning of the line
+- DO NOT add any concluding text or summary at the end
+- STOP after the last day's dinner`
     :
     `Създай професионален туристически план за ${dest} на БЪЛГАРСКИ език със следните параметри:
 
@@ -289,7 +291,9 @@ IMPORTANT:
 - Спазвай стила "${travelStyleBG}"
 - За ${travelers} души
 - Всяко място на НОВА линия
-- Емоджи само в началото на реда`;
+- Емоджи само в началото на реда
+- НЕ добавяй заключителен текст или обобщение в края
+- СПРИ след вечерята на последния ден`;
     
     const systemMessage = isEnglish ?
         "You are an expert travel guide who creates detailed and personalized travel programs. Respond exactly according to the given structure, with real places and specific recommendations." :
@@ -336,6 +340,14 @@ function renderUI(dest, days, startDate, travelers, budgetAmount, currency, md) 
     lines.forEach(line => {
         const l = line.trim(); 
         const upper = l.toUpperCase();
+        
+        // Филтър: Игнорирай редове със забележки и празни редове
+        if (l.startsWith('(') || l.startsWith('[') || 
+            upper.includes('ПРЕДЛОЖИ') || upper.includes('SUGGEST') || 
+            upper.includes('ПОВТОРИ') || upper.includes('REPEAT') ||
+            l.length <= 3) {
+            return; // Пропусни този ред
+        }
         
         // 1. ХОТЕЛИ
         if ((upper.startsWith('ХОТЕЛ:') || upper.startsWith('HOTEL:')) && hCount < 4) {
@@ -470,7 +482,7 @@ function renderUI(dest, days, startDate, travelers, budgetAmount, currency, md) 
                 <h4 class="text-[10px] font-black text-slate-400 mb-4 uppercase tracking-[0.2em] italic border-l-4 border-blue-500 pl-3">
                     <i class="fas fa-hotel mr-2"></i>Препоръчани настанявания
                 </h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">${hotelsHtml}</div>
+                <div class="space-y-3">${hotelsHtml}</div>
             </div>
             
             <!-- Програма -->
