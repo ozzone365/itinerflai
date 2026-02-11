@@ -728,6 +728,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const f = document.getElementById('planForm');
     if (f) f.onsubmit = generatePlan;
     
+    // Инициализация на auth след като DOM е зареден
+    if (sbClient) {
+        setupAuth();
+    }
+    
     // Затваряне на модала при клик извън него
     window.onclick = function(event) {
         const modal = document.getElementById('authModal');
