@@ -337,6 +337,7 @@ function renderUI(dest, days, startDate, travelers, budgetAmount, currency, md) 
         const l = line.trim(); 
         const upper = l.toUpperCase();
         
+        // 1. ХОТЕЛИ
         if ((upper.startsWith('ХОТЕЛ:') || upper.startsWith('HOTEL:')) && hCount < 4) {
             const parts = l.split(':')[1].trim().split('-');
             const name = parts[0].trim();
@@ -355,71 +356,46 @@ function renderUI(dest, days, startDate, travelers, budgetAmount, currency, md) 
                 </div>`;
             hCount++;
         }
+        // 2. ЗАГЛАВИЯ НА ДНИ
         else if (upper.includes('ДЕН') || upper.includes('DAY')) {
-            const dayNum = l.match(/\d+/)?.[0] || '';
             programHtml += `<div class="text-2xl font-black text-slate-900 border-b-4 border-blue-600/20 mt-10 mb-6 uppercase italic pb-1" style="page-break-before: auto; page-break-after: avoid;">${l}</div>`;
         }
-        // Обработка на редове с разделител "-"
-        else if (l.includes('-')) {
-            const parts = l.split('-');
-            if (parts.length >= 2) {
-                const title = parts[0].trim(); 
-                const desc = parts.slice(1).join('-').trim(); // Взима всичко след първия "-"
-                const cleanTitle = title.replace(/[\u{1F300}-\u{1F9FF}]/ug, '').replace(/ЗАКУСКА:|ОБЯД:|ВЕЧЕРЯ:/gi, '').trim();
-                
-                // Проверка за тип заведение
-                const isRestaurant = upper.includes('ЗАКУСКА') || upper.includes('ОБЯД') || upper.includes('ВЕЧЕРЯ') ||
-                                    upper.includes('BREAKFAST') || upper.includes('LUNCH') || upper.includes('DINNER');
-                
-                let linkUrl;
-                if (isRestaurant) {
-                    // Booking.com линк за ресторанти
-                    linkUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest + " " + cleanTitle)}&aid=701816`;
-                } else {
-                    // Google Maps за забележителности
-                    linkUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest + " " + cleanTitle)}`;
-                }
-                
-                programHtml += `
-                    <div class="bg-white p-5 rounded-[2.5rem] shadow-md border border-slate-50 mb-4 flex justify-between items-center group transition hover:border-blue-200" style="page-break-inside: avoid;">
-                        <div class="flex flex-col pr-4 flex-1">
-                            <b class="text-slate-900 font-extrabold text-base block mb-1 tracking-tight">${title}</b>
-                            <p class="text-slate-500 text-[11px] leading-relaxed line-clamp-2">${desc}</p>
-                        </div>
-                        <a href="${linkUrl}" target="_blank" class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center flex-shrink-0 shadow-lg group-hover:bg-blue-600 transition">
-                            <i class="fas fa-${isRestaurant ? 'utensils' : 'map-marker-alt'} text-sm"></i>
-                        </a>
-                    </div>`;
+        // 3. ВСИЧКО ДРУГО СТАВА КАРТА
+        else if (l.length > 3) {
+            // Разделяне на заглавие и описание (ако има "-")
+            let title = l;
+            let desc = "";
+            
+            if (l.includes('-')) {
+                const parts = l.split('-');
+                title = parts[0].trim();
+                desc = parts.slice(1).join('-').trim();
             }
-        }
-        // Fallback за редове без "-" но с емоджи
-        else if (/[\u{1F300}-\u{1F9FF}]/u.test(l)) {
-            const cleanTitle = l.replace(/[\u{1F300}-\u{1F9FF}]/ug, '').trim();
-            const linkUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest + " " + cleanTitle)}`;
             
+            // Почистване на заглавието от емоджи и ключови думи
+            const cleanTitle = title
+                .replace(/[\u{1F300}-\u{1F9FF}]/ug, '')
+                .replace(/ЗАКУСКА:|ОБЯД:|ВЕЧЕРЯ:|BREAKFAST:|LUNCH:|DINNER:/gi, '')
+                .trim();
+            
+            // Проверка дали е ресторант
+            const isRestaurant = upper.includes('ЗАКУСКА') || upper.includes('ОБЯД') || upper.includes('ВЕЧЕРЯ') ||
+                                upper.includes('BREAKFAST') || upper.includes('LUNCH') || upper.includes('DINNER');
+            
+            // Генериране на линк
+            const linkUrl = isRestaurant 
+                ? `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest + " " + cleanTitle)}&aid=701816`
+                : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest + " " + cleanTitle)}`;
+            
+            // Рендиране на картата
             programHtml += `
                 <div class="bg-white p-5 rounded-[2.5rem] shadow-md border border-slate-50 mb-4 flex justify-between items-center group transition hover:border-blue-200" style="page-break-inside: avoid;">
                     <div class="flex flex-col pr-4 flex-1">
-                        <b class="text-slate-900 font-extrabold text-base block mb-1 tracking-tight">${l}</b>
+                        <b class="text-slate-900 font-extrabold text-base block mb-1 tracking-tight">${title}</b>
+                        ${desc ? `<p class="text-slate-500 text-[11px] leading-relaxed line-clamp-2">${desc}</p>` : ''}
                     </div>
                     <a href="${linkUrl}" target="_blank" class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center flex-shrink-0 shadow-lg group-hover:bg-blue-600 transition">
-                        <i class="fas fa-map-marker-alt text-sm"></i>
-                    </a>
-                </div>`;
-        }
-        // Още един fallback за всички останали редове (ако не са хотел или ден)
-        else if (!upper.startsWith('ХОТЕЛ') && !upper.startsWith('HOTEL') && 
-                 !upper.includes('ДЕН') && !upper.includes('DAY') && 
-                 l.length > 10) {
-            const linkUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest + " " + l)}`;
-            
-            programHtml += `
-                <div class="bg-white p-5 rounded-[2.5rem] shadow-md border border-slate-50 mb-4 flex justify-between items-center group transition hover:border-blue-200" style="page-break-inside: avoid;">
-                    <div class="flex flex-col pr-4 flex-1">
-                        <b class="text-slate-900 font-extrabold text-base block mb-1 tracking-tight">${l}</b>
-                    </div>
-                    <a href="${linkUrl}" target="_blank" class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center flex-shrink-0 shadow-lg group-hover:bg-blue-600 transition">
-                        <i class="fas fa-map-marker-alt text-sm"></i>
+                        <i class="fas fa-${isRestaurant ? 'utensils' : 'map-marker-alt'} text-sm"></i>
                     </a>
                 </div>`;
         }
@@ -483,9 +459,6 @@ function renderUI(dest, days, startDate, travelers, budgetAmount, currency, md) 
                             </button>
                             <button onclick="shareToLinkedIn('${dest}')" class="bg-[#0A66C2] hover:bg-[#004182] text-white p-3 rounded-2xl shadow-lg transition" title="Сподели в LinkedIn">
                                 <i class="fab fa-linkedin-in text-sm"></i>
-                            </button>
-                            <button onclick="shareViaCopy('${dest}')" class="bg-slate-700 hover:bg-slate-600 text-white p-3 rounded-2xl shadow-lg transition" title="Копирай линк">
-                                <i class="fas fa-link text-sm"></i>
                             </button>
                         </div>
                     </div>
