@@ -56,20 +56,44 @@ function setupAuth() {
             const pass = document.getElementById('authPassword').value;
             const isReg = authTitle.innerText.includes('Регистрация');
             
+            if (!email || !pass) {
+                alert('Моля попълнете всички полета!');
+                return;
+            }
+            
             try {
-                const { error } = isReg 
-                    ? await sbClient.auth.signUp({ email, password: pass })
-                    : await sbClient.auth.signInWithPassword({ email, password: pass });
-                
-                if (error) throw error;
-                
-                // Скриваме модала при успех
-                const modal = document.getElementById('authModal');
-                if (modal) modal.style.display = 'none'; 
-                
-                checkUser();
+                if (isReg) {
+                    // Регистрация с имейл потвърждение
+                    const { data, error } = await sbClient.auth.signUp({
+                        email,
+                        password: pass,
+                        options: {
+                            emailRedirectTo: window.location.origin
+                        }
+                    });
+                    
+                    if (error) throw error;
+                    
+                    // Показване на съобщение за имейл потвърждение
+                    alert('✉️ Проверете имейла си!\n\nИзпратихме ви линк за потвърждение. Моля кликнете на линка в имейла, за да активирате профила си.');
+                    
+                    // Скриваме модала
+                    const modal = document.getElementById('authModal');
+                    if (modal) modal.style.display = 'none';
+                } else {
+                    // Вход
+                    const { error } = await sbClient.auth.signInWithPassword({ email, password: pass });
+                    
+                    if (error) throw error;
+                    
+                    // Скриваме модала при успех
+                    const modal = document.getElementById('authModal');
+                    if (modal) modal.style.display = 'none'; 
+                    
+                    checkUser();
+                }
             } catch (err) { 
-                alert(err.message); 
+                alert('Грешка: ' + err.message); 
             }
         };
     }
@@ -398,17 +422,15 @@ function renderUI(dest, days, startDate, travelers, budgetAmount, currency, md) 
             const isRestaurant = upper.includes('ЗАКУСКА') || upper.includes('ОБЯД') || upper.includes('ВЕЧЕРЯ') ||
                                 upper.includes('BREAKFAST') || upper.includes('LUNCH') || upper.includes('DINNER');
             
-            // Генериране на линк
-            const linkUrl = isRestaurant 
-                ? `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest + " " + cleanTitle)}&aid=701816`
-                : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest + " " + cleanTitle)}`;
+            // Генериране на линк - ВСИЧКИ към Google Maps
+            const linkUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest + " " + cleanTitle)}`;
             
             // Рендиране на картата
             programHtml += `
                 <div class="bg-white p-5 rounded-[2.5rem] shadow-md border border-slate-50 mb-4 flex justify-between items-center group transition hover:border-blue-200" style="page-break-inside: avoid;">
                     <div class="flex flex-col pr-4 flex-1">
-                        <b class="text-slate-900 font-extrabold text-base block mb-1 tracking-tight">${title}</b>
-                        ${desc ? `<p class="text-slate-500 text-[11px] leading-relaxed line-clamp-2">${desc}</p>` : ''}
+                        <b class="text-slate-900 font-extrabold text-lg block mb-1 tracking-tight">${title}</b>
+                        ${desc ? `<p class="text-slate-600 text-sm leading-relaxed line-clamp-2">${desc}</p>` : ''}
                     </div>
                     <a href="${linkUrl}" target="_blank" class="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center flex-shrink-0 shadow-lg group-hover:bg-blue-600 transition">
                         <i class="fas fa-${isRestaurant ? 'utensils' : 'map-marker-alt'} text-sm"></i>
