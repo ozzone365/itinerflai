@@ -27,7 +27,7 @@
                 <button onclick="setLanguage('en')" id="lang-en" class="px-4 py-1.5 text-[10px] font-bold rounded-md transition text-slate-500">EN</button>
             </div>
             <h1 class="text-xl sm:text-2xl font-black italic tracking-tighter cursor-pointer order-2 sm:order-2" onclick="location.reload()">
-                <i class="fas fa-bolt text-blue-600"></i> ITINERF<span class="text-blue-600">LAI</span>
+                <i class="fas fa-bolt text-blue-600"></i> ITINER<span class="text-blue-600">FLAI</span>
             </h1>
             <div id="userStatus" class="text-xs font-bold order-3 sm:order-3">
                 <button onclick="openModal()" data-i18n="login" class="bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-full uppercase tracking-widest hover:bg-blue-700 transition text-[10px] sm:text-xs">Вход</button>
@@ -119,8 +119,8 @@
                     <!-- Поле с предимства за нерегистрирани потребители -->
                     <div id="benefitsBox" class="mt-6 bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700 p-6 rounded-[2rem] text-white hidden">
                         <div class="text-center mb-4">
-                            <h3 class="text-xl font-black uppercase mb-2">Защо да се регистрирам?</h3>
-                            <p class="text-[10px] text-blue-100 mb-4">Отключи пълния потенциал на ITINERFLAI</p>
+                            <h3 class="text-xl font-black uppercase mb-2" data-i18n="benefits-title">Защо да се регистрирам?</h3>
+                            <p class="text-[10px] text-blue-100 mb-4" data-i18n="benefits-desc">Отключи пълния потенциал на ITINERFLAI</p>
                         </div>
                         
                         <div class="space-y-3 mb-5">
@@ -129,8 +129,8 @@
                                     <i class="fas fa-infinity text-white text-sm"></i>
                                 </div>
                                 <div>
-                                    <h4 class="font-bold text-[11px] uppercase mb-1">Неограничени програми</h4>
-                                    <p class="text-[9px] text-blue-100 leading-relaxed">Създавай колкото искаш пътни планове</p>
+                                    <h4 class="font-bold text-[11px] uppercase mb-1" data-i18n="benefit-unlimited-title">Неограничени програми</h4>
+                                    <p class="text-[9px] text-blue-100 leading-relaxed" data-i18n="benefit-unlimited-desc">Създавай колкото искаш пътни планове</p>
                                 </div>
                             </div>
                             
@@ -139,8 +139,8 @@
                                     <i class="fas fa-save text-white text-sm"></i>
                                 </div>
                                 <div>
-                                    <h4 class="font-bold text-[11px] uppercase mb-1">Облачно запазване</h4>
-                                    <p class="text-[9px] text-blue-100 leading-relaxed">Достъп от всяко устройство, по всяко време</p>
+                                    <h4 class="font-bold text-[11px] uppercase mb-1" data-i18n="benefit-cloud-title">Облачно запазване</h4>
+                                    <p class="text-[9px] text-blue-100 leading-relaxed" data-i18n="benefit-cloud-desc">Достъп от всяко устройство, по всяко време</p>
                                 </div>
                             </div>
                             
@@ -149,16 +149,16 @@
                                     <i class="fas fa-file-pdf text-white text-sm"></i>
                                 </div>
                                 <div>
-                                    <h4 class="font-bold text-[11px] uppercase mb-1">PDF експорт</h4>
-                                    <p class="text-[9px] text-blue-100 leading-relaxed">Изтегляй и споделяй програмите си</p>
+                                    <h4 class="font-bold text-[11px] uppercase mb-1" data-i18n="benefit-pdf-title">PDF експорт</h4>
+                                    <p class="text-[9px] text-blue-100 leading-relaxed" data-i18n="benefit-pdf-desc">Изтегляй и споделяй програмите си</p>
                                 </div>
                             </div>
                         </div>
                         
                         <button onclick="openModal()" class="w-full bg-white text-blue-700 font-black py-4 rounded-xl uppercase text-[11px] shadow-xl hover:bg-blue-50 transition-all">
-                            <i class="fas fa-rocket mr-2"></i> Започни безплатно
+                            <i class="fas fa-rocket mr-2"></i> <span data-i18n="benefit-cta">Започни безплатно</span>
                         </button>
-                        <p class="text-center text-[8px] text-blue-200 mt-2">Без кредитна карта • Регистрация за секунди</p>
+                        <p class="text-center text-[8px] text-blue-200 mt-2" data-i18n="benefit-note">Без кредитна карта • Регистрация за секунди</p>
                     </div>
                 </div>
             </div>
@@ -174,8 +174,8 @@
                     <div class="mb-6">
                         <i class="fas fa-route text-6xl text-slate-300"></i>
                     </div>
-                    <h3 class="text-2xl font-black text-slate-400 mb-3 uppercase italic">Готови за приключение?</h3>
-                    <p class="text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
+                    <h3 class="text-2xl font-black text-slate-400 mb-3 uppercase italic" data-i18n="placeholder-title">Готови за приключение?</h3>
+                    <p class="text-sm text-slate-400 max-w-md mx-auto leading-relaxed" data-i18n="placeholder-desc">
                         Попълнете формата отляво и нашият AI ще създаде перфектния пътен план специално за вас за секунди! ✨
                     </p>
                 </div>
@@ -208,6 +208,44 @@
             </div>
         </section>
     </main>
+
+    <!-- Footer -->
+    <footer class="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 text-white py-12 mt-20 border-t-4 border-blue-600">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                <!-- Logo & Brand -->
+                <div class="text-center md:text-left">
+                    <h3 class="text-2xl font-black italic tracking-tighter mb-2">
+                        <i class="fas fa-bolt text-blue-400"></i> ITINERF<span class="text-blue-400">LAI</span>
+                    </h3>
+                    <p class="text-xs text-slate-400 uppercase tracking-widest" data-i18n="footer-tagline">Вашият AI туристически архитект</p>
+                </div>
+
+                <!-- Contact -->
+                <div class="text-center">
+                    <p class="text-xs text-slate-400 uppercase tracking-wider mb-2" data-i18n="footer-contact">Свържете се с нас</p>
+                    <a href="mailto:office@itinerflai.com" class="text-blue-400 hover:text-blue-300 transition font-bold text-sm">
+                        <i class="fas fa-envelope mr-2"></i>office@itinerflai.com
+                    </a>
+                </div>
+
+                <!-- Copyright -->
+                <div class="text-center md:text-right">
+                    <p class="text-xs text-slate-400 mb-1">
+                        © 2024-<span id="currentYear"></span> <strong class="text-white">ITINERFLAI.com</strong>
+                    </p>
+                    <p class="text-[10px] text-slate-500" data-i18n="footer-rights">Всички права запазени</p>
+                </div>
+            </div>
+            
+            <!-- Divider -->
+            <div class="mt-8 pt-6 border-t border-slate-700 text-center">
+                <p class="text-[10px] text-slate-500" data-i18n="footer-powered">
+                    Създадено с ❤️ и AI технология
+                </p>
+            </div>
+        </div>
+    </footer>
 
     <div id="authModal" class="modal">
         <div class="bg-white rounded-[2.5rem] p-10 max-w-sm mx-auto mt-20 relative card-shadow">
