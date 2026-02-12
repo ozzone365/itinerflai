@@ -49,22 +49,36 @@ function setupAuth() {
     
     if (toggleBtn && mainBtn && authTitle) {
         toggleBtn.onclick = () => {
-            const isLogin = authTitle.innerText.includes('Вход');
+            const isLogin = authTitle.textContent.includes('Вход') || authTitle.textContent.includes('Login');
             if (isLogin) {
-                authTitle.innerText = 'Регистрация';
-                mainBtn.innerText = 'Регистрирай се';
-                toggleBtn.innerText = 'Вече имам профил';
+                // Превключване към регистрация
+                if (currentLanguage === 'en') {
+                    authTitle.textContent = 'Register';
+                    mainBtn.textContent = 'Sign Up';
+                    toggleBtn.textContent = 'Already have account';
+                } else {
+                    authTitle.textContent = 'Регистрация';
+                    mainBtn.textContent = 'Регистрирай се';
+                    toggleBtn.textContent = 'Вече имам профил';
+                }
             } else {
-                authTitle.innerText = 'Вход';
-                mainBtn.innerText = 'Влез';
-                toggleBtn.innerText = 'Регистрация';
+                // Превключване към вход
+                if (currentLanguage === 'en') {
+                    authTitle.textContent = 'Login';
+                    mainBtn.textContent = 'Login';
+                    toggleBtn.textContent = 'Register';
+                } else {
+                    authTitle.textContent = 'Вход';
+                    mainBtn.textContent = 'Влез';
+                    toggleBtn.textContent = 'Регистрация';
+                }
             }
         };
         
         mainBtn.onclick = async () => {
             const email = document.getElementById('authEmail').value;
             const pass = document.getElementById('authPassword').value;
-            const isReg = authTitle.innerText.includes('Регистрация');
+            const isReg = authTitle.textContent.includes('Регистрация') || authTitle.textContent.includes('Register');
             
             if (!email || !pass) {
                 alert('Моля попълнете всички полета!');
@@ -395,11 +409,11 @@ function renderUI(dest, days, startDate, travelers, budgetAmount, currency, md) 
             hotelsHtml += `
                 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm" style="page-break-inside: avoid;">
                     <div class="mb-2">
-                        <p class="text-[8px] font-black text-blue-600 uppercase mb-1">Настаняване</p>
-                        <p class="font-bold text-slate-800 text-[12px] leading-tight mb-1">${name}</p>
-                        ${desc ? `<p class="text-[9px] text-slate-500 leading-snug">${desc}</p>` : ''}
+                        <p class="text-[10px] font-black text-blue-600 uppercase mb-1">Настаняване</p>
+                        <p class="font-bold text-slate-800 text-base leading-tight mb-2">${name}</p>
+                        ${desc ? `<p class="text-sm text-slate-600 leading-snug">${desc}</p>` : ''}
                     </div>
-                    <a href="${hotelUrl}" target="_blank" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase shadow-md block text-center hover:bg-blue-700 transition">
+                    <a href="${hotelUrl}" target="_blank" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase shadow-md block text-center hover:bg-blue-700 transition">
                         Резервирай в Booking.com
                     </a>
                 </div>`;
@@ -788,7 +802,13 @@ const translations = {
         'icon-routes': 'Маршрути',
         'icon-restaurants': 'Ресторанти',
         'icon-hotels': 'Хотели',
-        'icon-attractions': 'Атракции'
+        'icon-attractions': 'Атракции',
+        'auth-title': 'Вход',
+        'auth-email': 'Email',
+        'auth-password': 'Парола',
+        'auth-main-btn': 'Влез',
+        'auth-toggle-btn': 'Регистрация',
+        'auth-close': 'Затвори'
     },
     en: {
         'hero-tag': 'The Future of Travel',
@@ -814,7 +834,13 @@ const translations = {
         'icon-routes': 'Routes',
         'icon-restaurants': 'Restaurants',
         'icon-hotels': 'Hotels',
-        'icon-attractions': 'Attractions'
+        'icon-attractions': 'Attractions',
+        'auth-title': 'Login',
+        'auth-email': 'Email',
+        'auth-password': 'Password',
+        'auth-main-btn': 'Login',
+        'auth-toggle-btn': 'Register',
+        'auth-close': 'Close'
     }
 };
 
