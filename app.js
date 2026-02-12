@@ -405,7 +405,7 @@ function renderUI(dest, days, startDate, travelers, budgetAmount, currency, md) 
             const parts = l.split(':')[1].trim().split('-');
             const name = parts[0].trim();
             const desc = parts[1] ? parts[1].trim() : "";
-            const hotelUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest + " " + name)}&aid=701816`;
+            const hotelUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest + " " + name)}&aid=7872577`;
             hotelsHtml += `
                 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm" style="page-break-inside: avoid;">
                     <div class="mb-2">
