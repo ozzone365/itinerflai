@@ -828,7 +828,9 @@ const translations = {
         'footer-tagline': 'Вашият AI туристически архитект',
         'footer-contact': 'Свържете се с нас',
         'footer-rights': 'Всички права запазени',
-        'footer-powered': 'Създадено с ❤️ и AI технология'
+        'footer-powered': 'Създадено с ❤️ и AI технология',
+        'destinations-title': 'Примерни дестинации',
+        'destinations-desc': 'Вдъхновете се от нашите готови AI-генерирани пътни програми за най-популярните дестинации в света'
     },
     en: {
         'hero-tag': 'The Future of Travel',
@@ -874,7 +876,9 @@ const translations = {
         'footer-tagline': 'Your AI Travel Architect',
         'footer-contact': 'Contact Us',
         'footer-rights': 'All Rights Reserved',
-        'footer-powered': 'Built with ❤️ and AI Technology'
+        'footer-powered': 'Built with ❤️ and AI Technology',
+        'destinations-title': 'Sample Destinations',
+        'destinations-desc': 'Get inspired by our ready-made AI-generated travel programs for the world\'s most popular destinations'
     }
 };
 
