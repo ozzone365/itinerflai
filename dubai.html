@@ -7,13 +7,21 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <style>
+        .lang-active { background: #2563eb !important; color: white !important; }
+    </style>
 </head>
 <body class="text-slate-800">
     <nav class="bg-white border-b p-4 sticky top-0 z-50">
-        <div class="container mx-auto flex justify-center items-center px-4">
+        <div class="container mx-auto flex justify-between items-center px-4">
+            <div class="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                <button onclick="setLanguage('bg')" id="lang-bg" class="px-4 py-1.5 text-[10px] font-bold rounded-md transition lang-active">BG</button>
+                <button onclick="setLanguage('en')" id="lang-en" class="px-4 py-1.5 text-[10px] font-bold rounded-md transition text-slate-500">EN</button>
+            </div>
             <a href="index.html" class="text-2xl font-black italic tracking-tighter cursor-pointer">
                 <i class="fas fa-bolt text-blue-600"></i> ITINERF<span class="text-blue-600">LAI</span>
             </a>
+            <div style="width: 100px;"></div>
         </div>
     </nav>
 
