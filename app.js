@@ -830,7 +830,18 @@ const translations = {
         'footer-rights': 'Всички права запазени',
         'footer-powered': 'Създадено с ❤️ и AI технология',
         'destinations-title': 'Примерни дестинации',
-        'destinations-desc': 'Вдъхновете се от нашите готови AI-генерирани пътни програми за най-популярните дестинации в света'
+        'destinations-desc': 'Вдъхновете се от нашите готови AI-генерирани пътни програми за най-популярните дестинации в света',
+        'dest-paris-title': 'Париж',
+        'dest-paris-subtitle': 'Градът на светлината',
+        'dest-paris-desc': '2-дневна романтична програма из сърцето на Франция. Ейфелова кула, Лувър, Нотр Дам и автентични френски ресторанти.',
+        'dest-dubai-title': 'Дубай',
+        'dest-dubai-subtitle': 'Градът на бъдещето',
+        'dest-dubai-desc': '2-дневна луксозна програма в най-модерния град. Бурж Халифа, Desert Safari, Mall of Emirates и световна кухня.',
+        'dest-tokyo-title': 'Токио',
+        'dest-tokyo-subtitle': 'Където традиция среща технология',
+        'dest-tokyo-desc': '2-дневна културна програма в столицата на Япония. Храмове, неонови улици, суши пазари и технологични чудеса.',
+        'dest-days': '2 дни',
+        'dest-people': '2 души'
     },
     en: {
         'hero-tag': 'The Future of Travel',
@@ -878,7 +889,18 @@ const translations = {
         'footer-rights': 'All Rights Reserved',
         'footer-powered': 'Built with ❤️ and AI Technology',
         'destinations-title': 'Sample Destinations',
-        'destinations-desc': 'Get inspired by our ready-made AI-generated travel programs for the world\'s most popular destinations'
+        'destinations-desc': 'Get inspired by our ready-made AI-generated travel programs for the world\'s most popular destinations',
+        'dest-paris-title': 'Paris',
+        'dest-paris-subtitle': 'The City of Light',
+        'dest-paris-desc': '2-day romantic program through the heart of France. Eiffel Tower, Louvre, Notre Dame and authentic French restaurants.',
+        'dest-dubai-title': 'Dubai',
+        'dest-dubai-subtitle': 'The City of the Future',
+        'dest-dubai-desc': '2-day luxury program in the most modern city. Burj Khalifa, Desert Safari, Mall of Emirates and world cuisine.',
+        'dest-tokyo-title': 'Tokyo',
+        'dest-tokyo-subtitle': 'Where Tradition Meets Technology',
+        'dest-tokyo-desc': '2-day cultural program in the capital of Japan. Temples, neon streets, sushi markets and technological wonders.',
+        'dest-days': '2 days',
+        'dest-people': '2 people'
     }
 };
 
