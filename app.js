@@ -752,6 +752,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const f = document.getElementById('planForm');
     if (f) f.onsubmit = generatePlan;
     
+    // Задаване на текущата година
+    const yearSpan = document.getElementById('currentYear');
+    if (yearSpan) {
+        yearSpan.textContent = new Date().getFullYear();
+    }
+    
     // Затваряне на модала при клик извън него
     window.onclick = function(event) {
         const modal = document.getElementById('authModal');
@@ -808,7 +814,21 @@ const translations = {
         'auth-password': 'Парола',
         'auth-main-btn': 'Влез',
         'auth-toggle-btn': 'Регистрация',
-        'auth-close': 'Затвори'
+        'auth-close': 'Затвори',
+        'benefit-unlimited-title': 'Неограничени програми',
+        'benefit-unlimited-desc': 'Създавай колкото искаш пътни планове',
+        'benefit-cloud-title': 'Облачно запазване',
+        'benefit-cloud-desc': 'Достъп от всяко устройство, по всяко време',
+        'benefit-pdf-title': 'PDF експорт',
+        'benefit-pdf-desc': 'Изтегляй и споделяй програмите си',
+        'benefit-cta': 'Започни безплатно',
+        'benefit-note': 'Без кредитна карта • Регистрация за секунди',
+        'placeholder-title': 'Готови за приключение?',
+        'placeholder-desc': 'Попълнете формата отляво и нашият AI ще създаде перфектния пътен план специално за вас за секунди! ✨',
+        'footer-tagline': 'Вашият AI туристически архитект',
+        'footer-contact': 'Свържете се с нас',
+        'footer-rights': 'Всички права запазени',
+        'footer-powered': 'Създадено с ❤️ и AI технология'
     },
     en: {
         'hero-tag': 'The Future of Travel',
@@ -840,7 +860,21 @@ const translations = {
         'auth-password': 'Password',
         'auth-main-btn': 'Login',
         'auth-toggle-btn': 'Register',
-        'auth-close': 'Close'
+        'auth-close': 'Close',
+        'benefit-unlimited-title': 'Unlimited Plans',
+        'benefit-unlimited-desc': 'Create as many travel plans as you want',
+        'benefit-cloud-title': 'Cloud Storage',
+        'benefit-cloud-desc': 'Access from any device, anytime',
+        'benefit-pdf-title': 'PDF Export',
+        'benefit-pdf-desc': 'Download and share your itineraries',
+        'benefit-cta': 'Start for Free',
+        'benefit-note': 'No credit card • Sign up in seconds',
+        'placeholder-title': 'Ready for Adventure?',
+        'placeholder-desc': 'Fill out the form on the left and our AI will create the perfect travel plan just for you in seconds! ✨',
+        'footer-tagline': 'Your AI Travel Architect',
+        'footer-contact': 'Contact Us',
+        'footer-rights': 'All Rights Reserved',
+        'footer-powered': 'Built with ❤️ and AI Technology'
     }
 };
 
