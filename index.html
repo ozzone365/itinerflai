@@ -27,7 +27,7 @@
                 <button onclick="setLanguage('en')" id="lang-en" class="px-4 py-1.5 text-[10px] font-bold rounded-md transition text-slate-500">EN</button>
             </div>
             <h1 class="text-xl sm:text-2xl font-black italic tracking-tighter cursor-pointer order-2 sm:order-2" onclick="location.reload()">
-                <i class="fas fa-bolt text-blue-600"></i> ITINER<span class="text-blue-600">FLAI</span>
+                <i class="fas fa-bolt text-blue-600"></i> ITINERF<span class="text-blue-600">LAI</span>
             </h1>
             <div id="userStatus" class="text-xs font-bold order-3 sm:order-3">
                 <button onclick="openModal()" data-i18n="login" class="bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-full uppercase tracking-widest hover:bg-blue-700 transition text-[10px] sm:text-xs">Вход</button>
@@ -58,6 +58,88 @@
                     <span class="text-[9px] text-slate-500 font-bold uppercase tracking-wider" data-i18n="icon-attractions">Атракции</span>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <!-- Примерни дестинации -->
+    <section class="container mx-auto px-4 py-16">
+        <div class="text-center mb-12">
+            <h2 class="text-4xl font-black uppercase italic mb-3" data-i18n="destinations-title">Примерни дестинации</h2>
+            <p class="text-slate-500 max-w-2xl mx-auto" data-i18n="destinations-desc">Вдъхновете се от нашите готови AI-генерирани пътни програми за най-популярните дестинации в света</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Париж -->
+            <a href="paris.html" class="group block bg-white rounded-[2.5rem] overflow-hidden card-shadow hover:shadow-2xl transition-all">
+                <div class="relative h-64 overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&h=400&fit=crop" 
+                         alt="Paris" 
+                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                    <div class="absolute bottom-4 left-4 right-4">
+                        <h3 class="text-2xl font-black text-white uppercase italic mb-1">Париж</h3>
+                        <p class="text-xs text-blue-200 uppercase tracking-wider">Градът на светлината</p>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <p class="text-sm text-slate-600 leading-relaxed mb-4">
+                        5-дневна романтична програма из сърцето на Франция. Ейфелова кула, Лувър, Нотр Дам и автентични френски ресторанти.
+                    </p>
+                    <div class="flex items-center justify-between text-xs text-slate-400">
+                        <span><i class="fas fa-calendar mr-1"></i>5 дни</span>
+                        <span><i class="fas fa-users mr-1"></i>2 души</span>
+                        <span><i class="fas fa-euro-sign mr-1"></i>1500€</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Дубай -->
+            <a href="dubai.html" class="group block bg-white rounded-[2.5rem] overflow-hidden card-shadow hover:shadow-2xl transition-all">
+                <div class="relative h-64 overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=600&h=400&fit=crop" 
+                         alt="Dubai" 
+                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                    <div class="absolute bottom-4 left-4 right-4">
+                        <h3 class="text-2xl font-black text-white uppercase italic mb-1">Дубай</h3>
+                        <p class="text-xs text-blue-200 uppercase tracking-wider">Градът на бъдещето</p>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <p class="text-sm text-slate-600 leading-relaxed mb-4">
+                        4-дневна луксозна програма в най-модерния град. Бурж Халифа, Desert Safari, Mall of Emirates и световна кухня.
+                    </p>
+                    <div class="flex items-center justify-between text-xs text-slate-400">
+                        <span><i class="fas fa-calendar mr-1"></i>4 дни</span>
+                        <span><i class="fas fa-users mr-1"></i>2 души</span>
+                        <span><i class="fas fa-dollar-sign mr-1"></i>2000$</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Токио -->
+            <a href="tokyo.html" class="group block bg-white rounded-[2.5rem] overflow-hidden card-shadow hover:shadow-2xl transition-all">
+                <div class="relative h-64 overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&h=400&fit=crop" 
+                         alt="Tokyo" 
+                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                    <div class="absolute bottom-4 left-4 right-4">
+                        <h3 class="text-2xl font-black text-white uppercase italic mb-1">Токио</h3>
+                        <p class="text-xs text-blue-200 uppercase tracking-wider">Където традиция среща технология</p>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <p class="text-sm text-slate-600 leading-relaxed mb-4">
+                        6-дневна културна програма в столицата на Япония. Храмове, неонови улици, суши пазари и технологични чудеса.
+                    </p>
+                    <div class="flex items-center justify-between text-xs text-slate-400">
+                        <span><i class="fas fa-calendar mr-1"></i>6 дни</span>
+                        <span><i class="fas fa-users mr-1"></i>2 души</span>
+                        <span><i class="fas fa-yen-sign mr-1"></i>180,000¥</span>
+                    </div>
+                </div>
+            </a>
         </div>
     </section>
 
@@ -224,20 +306,27 @@
                 <!-- Contact -->
                 <div class="text-center">
                     <p class="text-xs text-slate-400 uppercase tracking-wider mb-2" data-i18n="footer-contact">Свържете се с нас</p>
-                    <a href="mailto:office@itinerflai.com" class="text-blue-400 hover:text-blue-300 transition font-bold text-sm">
-                        <i class="fas fa-envelope mr-2"></i>office@itinerflai.com
+                    <a href="/cdn-cgi/l/email-protection#335c55555a5056735a475a5d5641555f525a1d505c5e" class="text-blue-400 hover:text-blue-300 transition font-bold text-sm">
+                        <i class="fas fa-envelope mr-2"></i><span class="__cf_email__" data-cfemail="325d54545b5157725b465b5c5740545e535b1c515d5f">[email&#160;protected]</span>
                     </a>
                 </div>
 
                 <!-- Copyright -->
                 <div class="text-center md:text-right">
                     <p class="text-xs text-slate-400 mb-1">
-                        © <span id="currentYear"></span> <strong class="text-white">ITINERFLAI.com</strong>
+                        © 2024-<span id="currentYear"></span> <strong class="text-white">ITINERFLAI.com</strong>
                     </p>
-                    <p class="text-[11px] text-slate-500" data-i18n="footer-rights">Всички права запазени</p>
+                    <p class="text-[10px] text-slate-500" data-i18n="footer-rights">Всички права запазени</p>
                 </div>
             </div>
             
+            <!-- Divider -->
+            <div class="mt-8 pt-6 border-t border-slate-700 text-center">
+                <p class="text-[10px] text-slate-500" data-i18n="footer-powered">
+                    Създадено с ❤️ и AI технология
+                </p>
+            </div>
+        </div>
     </footer>
 
     <div id="authModal" class="modal">
@@ -253,13 +342,4 @@
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-</body>
-</html>
-</script>
-    <script src="app.js"></script>
-</body>
-</html>
-
-
-
+    <script data-cfasync="false" src="/cdn-cgi/
