@@ -100,7 +100,7 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="text-[10px] font-black text-slate-400 uppercase block mb-1" data-i18n="budget">Бюджет</label>
-                                <input type="number" id="budgetAmount" required class="w-full rounded-2xl border-slate-200 border p-4 text-sm bg-slate-50 outline-none">
+                                <input type="number" id="budgetAmount" value="0" min="0" required class="w-full rounded-2xl border-slate-200 border p-4 text-sm bg-slate-50 outline-none">
                             </div>
                             <div>
                                 <label class="text-[10px] font-black text-slate-400 uppercase block mb-1" data-i18n="currency">Валута</label>
@@ -168,6 +168,17 @@
                     <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mx-auto mb-4"></div>
                     <p class="text-xs text-slate-400 font-bold uppercase" data-i18n="loading">AI планира...</p>
                 </div>
+                
+                <!-- Placeholder преди генериране -->
+                <div id="placeholder" class="py-32 text-center bg-gradient-to-br from-slate-50 to-blue-50 rounded-[2.5rem] border-2 border-dashed border-slate-200">
+                    <div class="mb-6">
+                        <i class="fas fa-route text-6xl text-slate-300"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-slate-400 mb-3 uppercase italic">Готови за приключение?</h3>
+                    <p class="text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
+                        Попълнете формата отляво и нашият AI ще създаде перфектния пътен план специално за вас за секунди! ✨
+                    </p>
+                </div>
 
                 <div id="result" class="hidden space-y-8 fade-in">
                     <div class="hero-gradient text-white p-12 rounded-[3rem] shadow-2xl relative">
@@ -200,13 +211,13 @@
 
     <div id="authModal" class="modal">
         <div class="bg-white rounded-[2.5rem] p-10 max-w-sm mx-auto mt-20 relative card-shadow">
-            <h2 id="authTitle" class="text-2xl font-black text-center mb-8 uppercase italic">Вход</h2>
+            <h2 id="authTitle" class="text-2xl font-black text-center mb-8 uppercase italic" data-i18n="auth-title">Вход</h2>
             <div class="space-y-4">
-                <input type="email" id="authEmail" placeholder="Email" class="w-full rounded-2xl border bg-slate-50 p-4 outline-none text-sm">
-                <input type="password" id="authPassword" placeholder="Парола" class="w-full rounded-2xl border bg-slate-50 p-4 outline-none text-sm">
-                <button id="mainAuthBtn" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl uppercase text-xs">Влез</button>
-                <button id="toggleAuthBtn" class="w-full text-slate-400 font-bold py-2 text-[10px] uppercase">Регистрация</button>
-                <button onclick="closeModal()" class="w-full text-slate-300 py-2 text-[10px] uppercase mt-4">Затвори</button>
+                <input type="email" id="authEmail" placeholder="Email" data-i18n-placeholder="auth-email" class="w-full rounded-2xl border bg-slate-50 p-4 outline-none text-sm">
+                <input type="password" id="authPassword" placeholder="Парола" data-i18n-placeholder="auth-password" class="w-full rounded-2xl border bg-slate-50 p-4 outline-none text-sm">
+                <button id="mainAuthBtn" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl uppercase text-xs" data-i18n="auth-main-btn">Влез</button>
+                <button id="toggleAuthBtn" class="w-full text-slate-400 font-bold py-2 text-[10px] uppercase" data-i18n="auth-toggle-btn">Регистрация</button>
+                <button onclick="closeModal()" class="w-full text-slate-300 py-2 text-[10px] uppercase mt-4" data-i18n="auth-close">Затвори</button>
             </div>
         </div>
     </div>
