@@ -27,7 +27,7 @@
                 <button onclick="setLanguage('en')" id="lang-en" class="px-4 py-1.5 text-[10px] font-bold rounded-md transition text-slate-500">EN</button>
             </div>
             <h1 class="text-xl sm:text-2xl font-black italic tracking-tighter cursor-pointer order-2 sm:order-2" onclick="location.reload()">
-                <i class="fas fa-bolt text-blue-600"></i> ITINER<span class="text-blue-600">FLAI</span>
+                <i class="fas fa-bolt text-blue-600"></i> ITINERF<span class="text-blue-600">LAI</span>
             </h1>
             <div id="userStatus" class="text-xs font-bold order-3 sm:order-3">
                 <button onclick="openModal()" data-i18n="login" class="bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-full uppercase tracking-widest hover:bg-blue-700 transition text-[10px] sm:text-xs">Вход</button>
@@ -320,9 +320,10 @@
                 </div>
             </div>
             
-    </footer>
-
-    <div id="authModal" class="modal">
+            <!-- Divider -->
+            <div class="mt-8 pt-6 border-t border-slate-700 text-center">
+                <p class="text-[10px] text-slate-500" data-i18n="footer-powered">
+              v id="authModal" class="modal">
         <div class="bg-white rounded-[2.5rem] p-10 max-w-sm mx-auto mt-20 relative card-shadow">
             <h2 id="authTitle" class="text-2xl font-black text-center mb-8 uppercase italic" data-i18n="auth-title">Вход</h2>
             <div class="space-y-4">
@@ -335,5 +336,8 @@
         </div>
     </div>
 
-    <script data-cfa
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+</body>
+</html>
