@@ -18,25 +18,20 @@ async function init() {
 
         if (window.supabase && !sbClient) {
             sbClient = window.supabase.createClient(S_URL, S_KEY);
-            
-            // Изчакваме DOM да е зареден преди да setup-ваме auth
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', () => {
-                    setupAuth();
-                    checkUser();
-                });
-            } else {
-                // DOM вече е зареден
-                setupAuth();
-                checkUser();
-            }
+            setupAuth();
+            checkUser();
         }
     } catch (e) {
         console.error("Грешка при инициализация:", e);
     }
 }
 
-init();
+// Изчакваме DOM и библиотеките да се заредят
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
 
 /**
  * АУТЕНТИКАЦИЯ: Вход и Регистрация
