@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Общи условия | ITINERFLAI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { font-family: 'Roboto', sans-serif; background-color: #f8fafc; }
+        .lang-active { background: #2563eb !important; color: white !important; }
+    </style>
+</head>
+<body class="text-slate-800">
+    <nav class="bg-white border-b p-4 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center px-4">
+            <div class="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                <button onclick="setLanguage('bg')" id="lang-bg" class="px-4 py-1.5 text-[10px] font-bold rounded-md transition lang-active">BG</button>
+                <button onclick="setLanguage('en')" id="lang-en" class="px-4 py-1.5 text-[10px] font-bold rounded-md transition text-slate-500">EN</button>
+            </div>
+            <a href="index.html" class="text-2xl font-black italic tracking-tighter cursor-pointer">
+                <i class="fas fa-bolt text-blue-600"></i> ITINERF<span class="text-blue-600">LAI</span>
+            </a>
+            <div style="width: 100px;"></div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-12 max-w-4xl">
+        <a href="index.html" class="text-blue-600 font-bold mb-8 inline-block hover:text-blue-700 transition">
+            <i class="fas fa-arrow-left mr-2"></i><span data-i18n="back-home">Назад към началото</span>
+        </a>
+        
+        <h1 class="text-4xl font-black mb-8 text-slate-900 uppercase italic" data-i18n="terms-title">Общи условия</h1>
+        <p class="mb-4 text-sm text-slate-500" data-i18n="terms-updated">Последна актуализация: Февруари 2026 г.</p>
+
+        <section class="space-y-6 bg-white p-8 rounded-[2.5rem] shadow-md border border-slate-100">
+            <div>
+                <h2 class="text-xl font-bold mb-3 text-blue-600" data-i18n="terms-service-title">1. Описание на услугата</h2>
+                <p data-i18n="terms-service-desc">ITINERFLAI е базирана на изкуствен интелект платформа за генериране на примерни туристически маршрути. Информацията се генерира в реално време чрез технологията на OpenAI.</p>
+            </div>
+
+            <div>
+                <h2 class="text-xl font-bold mb-3 text-blue-600" data-i18n="terms-liability-title">2. Ограничаване на отговорността</h2>
+                <p data-i18n="terms-liability-desc">Генерираните маршрути са само с информативна цел. ITINERFLAI не гарантира точността на работно време, цени или наличност на обектите. Потребителите трябва да потвърждават информацията директно с доставчиците на услуги.</p>
+            </div>
+
+            <div>
+                <h2 class="text-xl font-bold mb-3 text-blue-600" data-i18n="terms-affiliate-title">3. Партньорски връзки (Affiliate Disclosure)</h2>
+                <p data-i18n="terms-affiliate-desc">Сайтът съдържа афилиейт линкове към Booking.com и други партньори. При резервация чрез тези линкове, ние може да получим комисионна без допълнителни разходи за Вас.</p>
+            </div>
+
+            <div>
+                <h2 class="text-xl font-bold mb-3 text-blue-600" data-i18n="terms-usage-title">4. Използване на платформата</h2>
+                <p data-i18n="terms-usage-desc">Регистрирайки се в ITINERFLAI, Вие се съгласявате да използвате платформата само за легални цели и да не злоупотребявате с генерираното съдържание.</p>
+            </div>
+
+            <div>
+                <h2 class="text-xl font-bold mb-3 text-blue-600" data-i18n="terms-data-title">5. Данни и поверителност</h2>
+                <p data-i18n="terms-data-desc">Вашите лични данни се обработват съгласно нашата <a href="privacy.html" class="text-blue-600 underline">Политика за поверителност</a> и в съответствие с GDPR разпоредбите.</p>
+            </div>
+
+            <div>
+                <h2 class="text-xl font-bold mb-3 text-blue-600" data-i18n="terms-law-title">6. Приложимо право</h2>
+                <p data-i18n="terms-law-desc">Тези условия се регулират от законите на Република България и Европейския съюз.</p>
+            </div>
+
+            <div>
+                <h2 class="text-xl font-bold mb-3 text-blue-600" data-i18n="terms-contact-title">7. Контакт</h2>
+                <p data-i18n="terms-contact-desc">За въпроси относно тези условия, моля свържете се с нас на:</p>
+                <p class="text-blue-600 font-bold mt-2">office@itinerflai.com</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 text-white py-12 mt-20 border-t-4 border-blue-600">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                <div class="text-center md:text-left">
+                    <h3 class="text-2xl font-black italic tracking-tighter mb-2">
+                        <i class="fas fa-bolt text-blue-400"></i> ITINERF<span class="text-blue-400">LAI</span>
+                    </h3>
+                    <p class="text-xs text-slate-400 uppercase tracking-widest" data-i18n="footer-tagline">Вашият AI туристически архитект</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-xs text-slate-400 uppercase tracking-wider mb-2" data-i18n="footer-contact">Свържете се с нас</p>
+                    <a href="mailto:office@itinerflai.com" class="text-blue-400 hover:text-blue-300 transition font-bold text-sm">
+                        <i class="fas fa-envelope mr-2"></i>office@itinerflai.com
+                    </a>
+                </div>
+                <div class="text-center md:text-right">
+                    <p class="text-xs text-slate-400 mb-1">
+                        © 2024-<span id="currentYear"></span> <strong class="text-white">ITINERFLAI.com</strong>
+                    </p>
+                    <p class="text-[10px] text-slate-500" data-i18n="footer-rights">Всички права запазени</p>
+                </div>
+            </div>
+            <div class="mt-8 pt-6 border-t border-slate-700 text-center">
+                <div class="flex justify-center gap-4 mb-4 text-[10px]">
+                    <a href="terms.html" class="text-slate-400 hover:text-blue-400 transition" data-i18n="footer-terms">Общи условия</a>
+                    <span class="text-slate-600">|</span>
+                    <a href="privacy.html" class="text-slate-400 hover:text-blue-400 transition" data-i18n="footer-privacy">Политика за поверителност</a>
+                </div>
+                <p class="text-[10px] text-slate-500" data-i18n="footer-powered">
+                    Създадено с ❤️ и AI технология
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
