@@ -291,21 +291,27 @@
         </section>
     </main>
 
-   <footer class="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 text-white py-12 mt-20 border-t-4 border-blue-600">
+    <!-- Footer -->
+    <footer class="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 text-white py-12 mt-20 border-t-4 border-blue-600">
         <div class="container mx-auto px-4">
             <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                <!-- Logo & Brand -->
                 <div class="text-center md:text-left">
                     <h3 class="text-2xl font-black italic tracking-tighter mb-2">
                         <i class="fas fa-bolt text-blue-400"></i> ITINER<span class="text-blue-400">FLAI</span>
                     </h3>
                     <p class="text-xs text-slate-400 uppercase tracking-widest" data-i18n="footer-tagline">Вашият AI туристически архитект</p>
                 </div>
+
+                <!-- Contact -->
                 <div class="text-center">
                     <p class="text-xs text-slate-400 uppercase tracking-wider mb-2" data-i18n="footer-contact">Свържете се с нас</p>
                     <a href="mailto:office@itinerflai.com" class="text-blue-400 hover:text-blue-300 transition font-bold text-sm">
                         <i class="fas fa-envelope mr-2"></i>office@itinerflai.com
                     </a>
                 </div>
+
+                <!-- Copyright -->
                 <div class="text-center md:text-right">
                     <p class="text-xs text-slate-400 mb-1">
                         © <span id="currentYear"></span> <strong class="text-white">ITINERFLAI.com</strong>
@@ -313,6 +319,8 @@
                     <p class="text-[10px] text-slate-500" data-i18n="footer-rights">Всички права запазени</p>
                 </div>
             </div>
+            
+            <!-- Divider -->
             <div class="mt-8 pt-6 border-t border-slate-700 text-center">
                 <div class="flex justify-center gap-4 mb-4 text-[10px]">
                     <a href="terms.html" class="text-slate-400 hover:text-blue-400 transition" data-i18n="footer-terms">Общи условия</a>
@@ -337,5 +345,9 @@
         </div>
     </div>
 
-    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"
-
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+</body>
+</html>
