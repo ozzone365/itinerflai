@@ -211,6 +211,18 @@ window.deleteSaved = async (id) => {
 };
 
 /**
+ * Генерира Trip.com Deep Link за дестинация
+ */
+function getTripComLink(destination) {
+    const baseUrl = "https://www.trip.com/hotels/list";
+    const allianceId = "7847155";
+    const sid = "295352142";
+    
+    // Сглобяваме линк, който директно търси дестинацията
+    return `${baseUrl}?cityname=${encodeURIComponent(destination)}&Allianceid=${allianceId}&SID=${sid}&trip_sub1=ai_itinerary`;
+}
+
+/**
  * AI ГЕНЕРИРАНЕ: OpenAI Integration
  */
 async function generatePlan(e) {
@@ -522,16 +534,16 @@ function renderUI(dest, days, startDate, travelers, budgetAmount, currency, md) 
                 </div>
             </div>
             
-            <!-- Хотели -->
-            <div class="mb-10 px-2" style="page-break-inside: avoid;">
-                <h4 class="text-[10px] font-black text-slate-400 mb-4 uppercase tracking-[0.2em] italic border-l-4 border-blue-500 pl-3">
-                    <i class="fas fa-hotel mr-2"></i>Препоръчани настанявания
-                </h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${hotelsHtml}</div>
-            </div>
-            
             <!-- Програма -->
             <div class="px-2">${programHtml}</div>
+            
+            <!-- Trip.com Бутон -->
+            <div class="mt-12 mb-10 px-2 text-center" style="page-break-inside: avoid;">
+                <a href="${getTripComLink(dest)}" target="_blank" class="inline-block bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-black py-6 px-12 rounded-3xl uppercase text-base transition shadow-2xl transform hover:scale-105" style="text-decoration: none;">
+                    <i class="fas fa-hotel mr-3 text-2xl"></i>
+                    Виж наличните хотели в ${dest} за твоите дати в Trip.com
+                </a>
+            </div>
             
             <!-- Footer (само в PDF) -->
             <div class="mt-16 p-6 bg-slate-50 rounded-2xl text-center border-t-4 border-blue-600" style="page-break-inside: avoid;" data-html2canvas-show="true">
@@ -643,7 +655,7 @@ window.saveToPDF = async function(n) {
         });
         
         const opt = {
-            margin: [15, 12, 15, 12],
+            margin: [8, 12, 15, 12], // Намалено от 15 на 8 за top margin
             filename: `ITINERFLAI_${n}_${new Date().toISOString().split('T')[0]}.pdf`,
             image: { 
                 type: 'jpeg', 
@@ -656,7 +668,9 @@ window.saveToPDF = async function(n) {
                 letterRendering: true,
                 allowTaint: false,
                 backgroundColor: '#ffffff',
-                imageTimeout: 15000
+                imageTimeout: 15000,
+                scrollY: -window.scrollY, // Започва от самия горе
+                scrollX: 0
             },
             jsPDF: { 
                 unit: 'mm', 
