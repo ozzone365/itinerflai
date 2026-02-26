@@ -165,9 +165,13 @@ async function loadUserItineraries() {
         .order('created_at', { ascending: false });
 
     const container = document.getElementById('savedItineraries');
+    const section = document.getElementById('myTripsSection');
     if (!container) return;
 
     if (data && data.length > 0) {
+        // Показваме секцията
+        if (section) section.classList.remove('hidden');
+        
         container.innerHTML = data.map(item => `
             <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 p-5 rounded-2xl flex flex-col justify-between group hover:border-blue-500 hover:shadow-xl hover:shadow-blue-500/20 transition-all h-full">
                 <div class="mb-4">
@@ -190,6 +194,8 @@ async function loadUserItineraries() {
             </div>
         `).join('');
     } else {
+        // Скриваме секцията ако няма данни
+        if (section) section.classList.add('hidden');
         container.innerHTML = `<p class="text-slate-600 text-[10px] uppercase font-bold italic tracking-widest col-span-full">Нямате запазени планове.</p>`;
     }
 }
@@ -539,9 +545,9 @@ function renderUI(dest, days, startDate, travelers, budgetAmount, currency, md) 
             
             <!-- Trip.com Бутон -->
             <div class="mt-12 mb-10 px-2 text-center" style="page-break-inside: avoid;">
-                <a href="${getTripComLink(dest)}" target="_blank" class="inline-block bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-black py-6 px-12 rounded-3xl uppercase text-base transition shadow-2xl transform hover:scale-105" style="text-decoration: none;">
-                    <i class="fas fa-hotel mr-3 text-2xl"></i>
-                    Виж наличните хотели в ${dest} за твоите дати в Trip.com
+                <a href="${getTripComLink(dest)}" target="_blank" class="inline-block bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-black py-5 px-8 rounded-3xl text-sm transition shadow-2xl transform hover:scale-105" style="text-decoration: none;">
+                    <i class="fas fa-hotel mr-2 text-lg"></i>
+                    <span class="uppercase">Виж наличните хотели в</span> ${dest} <span class="uppercase">за твоите дати в Trip.com</span>
                 </a>
             </div>
             
@@ -655,22 +661,20 @@ window.saveToPDF = async function(n) {
         });
         
         const opt = {
-            margin: [8, 12, 15, 12], // Намалено от 15 на 8 за top margin
+            margin: [10, 10, 10, 10],
             filename: `ITINERFLAI_${n}_${new Date().toISOString().split('T')[0]}.pdf`,
             image: { 
                 type: 'jpeg', 
-                quality: 0.95
+                quality: 0.98
             },
             html2canvas: { 
-                scale: 2.5,
+                scale: 2,
                 useCORS: true,
                 logging: false,
                 letterRendering: true,
                 allowTaint: false,
                 backgroundColor: '#ffffff',
-                imageTimeout: 15000,
-                scrollY: -window.scrollY, // Започва от самия горе
-                scrollX: 0
+                imageTimeout: 15000
             },
             jsPDF: { 
                 unit: 'mm', 
@@ -679,10 +683,10 @@ window.saveToPDF = async function(n) {
                 compress: true
             },
             pagebreak: { 
-                mode: ['avoid-all', 'css', 'legacy'],
-                before: [],
+                mode: ['avoid-all', 'css'],
+                before: ['.text-2xl'],
                 after: [],
-                avoid: ['img', '.bg-white', '.rounded-2xl', '.rounded-\\[2\\.5rem\\]', '.shadow-md']
+                avoid: ['img', '.bg-white', '.rounded-\\[2\\.5rem\\]', '.shadow-md', 'a']
             }
         };
         
