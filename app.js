@@ -660,12 +660,16 @@ window.saveToPDF = async function(n) {
             elem.dataset.hadClamp = 'true';
         });
         
+        // Временно премахване на padding от pdfArea за правилно PDF генериране
+        const originalPadding = el.style.paddingBottom;
+        el.style.paddingBottom = '0';
+        
         const opt = {
-            margin: [10, 10, 10, 10],
+            margin: [8, 10, 8, 10],
             filename: `ITINERFLAI_${n}_${new Date().toISOString().split('T')[0]}.pdf`,
             image: { 
                 type: 'jpeg', 
-                quality: 0.98
+                quality: 0.95
             },
             html2canvas: { 
                 scale: 2,
@@ -674,7 +678,9 @@ window.saveToPDF = async function(n) {
                 letterRendering: true,
                 allowTaint: false,
                 backgroundColor: '#ffffff',
-                imageTimeout: 15000
+                imageTimeout: 15000,
+                windowHeight: el.scrollHeight,
+                y: 0
             },
             jsPDF: { 
                 unit: 'mm', 
@@ -686,11 +692,14 @@ window.saveToPDF = async function(n) {
                 mode: ['avoid-all', 'css'],
                 before: ['.text-2xl'],
                 after: [],
-                avoid: ['img', '.bg-white', '.rounded-\\[2\\.5rem\\]', '.shadow-md', 'a']
+                avoid: ['img', '.bg-white', '.rounded-\\[2\\.5rem\\]', '.shadow-md']
             }
         };
         
         await html2pdf().set(opt).from(el).save();
+        
+        // Връщане на padding
+        el.style.paddingBottom = originalPadding;
         
         // Връщане на оригиналния вид
         ignoreElements.forEach(elem => {
